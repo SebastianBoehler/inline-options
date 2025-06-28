@@ -23,7 +23,7 @@ export default function BarrierVisualization({ product }: BarrierVisualizationPr
     <div className="p-6 border-gray-200">
       <div className="max-w-2xl mx-auto">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          Barrier Analysis - {product.AssetName}
+          {product.AssetName}
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
             currentPrice > lowerBarrier && currentPrice < upperBarrier
               ? 'bg-green-100 text-green-800'

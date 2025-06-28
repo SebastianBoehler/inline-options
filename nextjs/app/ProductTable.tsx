@@ -85,7 +85,7 @@ const getSortIndicator = (key: SortKey) => {
 };
 
   return (
-    <div className="mx-auto w-full overflow-x-scroll">
+    <div className="mx-auto w-full h-screen overflow-y-auto overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -93,7 +93,7 @@ const getSortIndicator = (key: SortKey) => {
               <th
                 key={column}
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="sticky top-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => requestSort(column)}
               >
                 <span className="flex items-center gap-1">
@@ -102,10 +102,10 @@ const getSortIndicator = (key: SortKey) => {
                 </span>
               </th>
             ))}
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+            <th scope="col" className="sticky top-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
               Link
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="sticky top-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Expand
             </th>
           </tr>
