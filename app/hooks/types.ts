@@ -45,11 +45,6 @@ export interface ProductSearchResponse {
     UpperBarrierInlineWarrantSuffix: string;
     Distance2CorridorLowPercentInvertedDecimalPlaces: number;
     Distance2CorridorHighPercentInvertedDecimalPlaces: number;
-    [key: string]: unknown;
-    spread?: number;
-    daysUntilExpiry?: number;
-    daysRunning?: number;
-    volatility?: number;
   }>;
 }
 
@@ -59,4 +54,13 @@ export interface HistoryItem {
   Date: string;
   IndexPrice: number;
   UnderlyingPrice: number;
+}
+
+export type Product = ProductSearchResponse["Products"][number];
+
+export interface ExtendedProduct extends Product {
+  spread: string;
+  daysUntilExpiry: number;
+  daysRunning: number;
+  rangePercent: number;
 }
