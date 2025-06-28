@@ -3,7 +3,7 @@ import ProductTable from "./ProductTable";
 import { useRef, useState } from "react";
 
 export default function Home() {
-  const [limit, setLimit] = useState(100);
+  const [limit, setLimit] = useState(50);
   const [offset, setOffset] = useState(0);
   const currentDate = useRef(new Date().toISOString().split('T')[0]);
   const [calcDateFrom, setCalcDateFrom] = useState(currentDate.current);

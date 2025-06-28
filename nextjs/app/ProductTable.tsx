@@ -97,7 +97,7 @@ const getSortIndicator = (key: SortKey) => {
 };
 
   return (
-    <div className="mx-auto w-full h-screen overflow-y-auto overflow-x-auto">
+    <div className="mx-auto w-full h-[70vh] overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

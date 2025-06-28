@@ -138,7 +138,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const products = await fetchProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
     console.log(products.length, pageNum);
     fetchedProducts.push(...products);
-    if (products.length < 25 || fetchedProducts.length > limit) {
+    if (products.length < 25 || fetchedProducts.length >= limit) {
       isFinished = true;
     }
     pageNum++;
