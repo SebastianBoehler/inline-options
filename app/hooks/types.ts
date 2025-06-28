@@ -62,5 +62,6 @@ export interface ExtendedProduct extends Product {
   spread: string;
   daysUntilExpiry: number;
   daysRunning: number;
-  rangePercent: number;
+  rangePercent: string;
+  potentialReturn: string;
 }

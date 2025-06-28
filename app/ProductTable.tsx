@@ -17,6 +17,7 @@ const columns: SortKey[] = [
   "Offer",
   "spread",
   "rangePercent",
+  "potentialReturn",
   "daysUntilExpiry",
   "daysRunning",
 ];
@@ -123,7 +124,9 @@ const getSortIndicator = (key: SortKey) => {
                 </td>
               ))}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                <Link href={`https://www.sg-zertifikate.de/product-details/${product.Code}`}>{product.Code}</Link>
+                <Link href={`https://www.sg-zertifikate.de/product-details/${product.Code}`} target="_blank">
+                  {product.Code}
+                </Link>
               </td>
             </tr>
           ))}

@@ -57,21 +57,28 @@ export async function extendedProducts(limit: number = 100, offset: number = 0):
     }
     pageNum++;
   }
-  const extendedProducts = fetchedProducts.map((p) => ({
-    ...p,
-    spread: ((p.Offer - p.Bid) / 10).toFixed(2),
-    daysUntilExpiry: differenceInDays(new Date(p.MaturityDate), new Date()),
-    daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
-    rangePercent: (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant,
-  }));
+  const extendedProducts = fetchedProducts.map((p) => {
+    const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
+    const spread = (p.Offer - p.Bid) / 10;
+    const potentialReturn = ((10 - p.Bid) / p.Bid) * 100;
+    return {
+      ...p,
+      spread: spread.toFixed(2),
+      daysUntilExpiry: differenceInDays(new Date(p.MaturityDate), new Date()),
+      daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
+      rangePercent: rangePercent.toFixed(2),
+      potentialReturn: potentialReturn.toFixed(2) + "%",
+    } as ExtendedProduct;
+  });
   //sort by lowest days until expiry and biggest range
   extendedProducts.sort((a, b) => {
     if (a.daysUntilExpiry < b.daysUntilExpiry) return -1;
     if (a.daysUntilExpiry > b.daysUntilExpiry) return 1;
-    if (a.rangePercent < b.rangePercent) return -1;
-    if (a.rangePercent > b.rangePercent) return 1;
+    if (Number(a.rangePercent) < Number(b.rangePercent)) return -1;
+    if (Number(a.rangePercent) > Number(b.rangePercent)) return 1;
     return 0;
   });
+  console.log(extendedProducts[0]);
   return extendedProducts;
 }
 
