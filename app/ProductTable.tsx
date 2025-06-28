@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { extendedProducts, getCachedExtendedProducts } from "./hooks/sg";
 import { ExtendedProduct } from "./hooks/types";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
 
 type SortKey = keyof ExtendedProduct;
 
@@ -15,6 +16,7 @@ const columns: SortKey[] = [
   "Bid",
   "Offer",
   "spread",
+  "rangePercent",
   "daysUntilExpiry",
   "daysRunning",
 ];
@@ -78,7 +80,7 @@ const getSortIndicator = (key: SortKey) => {
 };
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="mx-auto w-full overflow-x-scroll">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -95,6 +97,9 @@ const getSortIndicator = (key: SortKey) => {
                 </span>
               </th>
             ))}
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+              Link
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -117,6 +122,9 @@ const getSortIndicator = (key: SortKey) => {
                   {product[column] as string}
                 </td>
               ))}
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                <Link href={`https://www.sg-zertifikate.de/product-details/${product.Code}`}>{product.Code}</Link>
+              </td>
             </tr>
           ))}
         </tbody>
