@@ -13,6 +13,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "fs": "^0.0.1-security"
+    "date-fns": "^4.1.0",
+    "fs": "^0.0.1-security",
+    "yahoo-finance2": "^2.11.3"
   }
 }

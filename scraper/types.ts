@@ -1,0 +1,62 @@
+export interface ProductSearchResponse {
+  Products: Array<{
+    Id: number;
+    ProductClassificationId: number;
+    Isin: string;
+    IsSecondaryMarket: boolean;
+    Code: string;
+    ExchangeCode: string;
+    AssetId: number;
+    AssetName: string;
+    AssetCurrency: string;
+    Currency: string;
+    Status: number;
+    FollowCode: string | null;
+    IsSiat: boolean;
+    AssetNMP: string;
+    AssetIsin: string;
+    AssetNMPExchangeCode: string;
+    AssetDecimalPlaces: number;
+    AssetRic: string;
+    MarketingAssetNMPExchangeCode: string | null;
+    MarketingAssetNMP: string | null;
+    MarketingAssetId: number | null;
+    MarketingAssetISIN: string | null;
+    MarketingAssetRic: string | null;
+    MigratedToOneFlow: boolean;
+    MaturityDate: string;
+    AssetCurrencyRaw: string;
+    TodayBarrierHitDate: string | null;
+    IssueDate: string;
+    Venue: string | null;
+    IsPanther: boolean;
+    EsgEligible: string | null;
+    FkAssetType: number;
+    LowerBarrierInlineWarrant: number;
+    UpperBarrierInlineWarrant: number;
+    Distance2CorridorLowPercentInverted: string | null;
+    Distance2CorridorHighPercentInverted: string | null;
+    CalcDate: string;
+    Bid: number;
+    Offer: number;
+    MaxPerformanceStrikeCurrencyPercentPA: number;
+    BrokerLinks: string | null;
+    LowerBarrierInlineWarrantSuffix: string;
+    UpperBarrierInlineWarrantSuffix: string;
+    Distance2CorridorLowPercentInvertedDecimalPlaces: number;
+    Distance2CorridorHighPercentInvertedDecimalPlaces: number;
+    [key: string]: unknown;
+    spread?: number;
+    daysUntilExpiry?: number;
+    daysRunning?: number;
+    volatility?: number;
+  }>;
+}
+
+export interface HistoryItem {
+  Ask: number;
+  Bid: number;
+  Date: string;
+  IndexPrice: number;
+  UnderlyingPrice: number;
+}
