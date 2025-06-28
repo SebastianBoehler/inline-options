@@ -93,10 +93,16 @@ export async function extendedProducts(limit: number = 100, offset: number = 0):
     pageNum++;
   }
   //using lodash put into chunks and add underlying price from latest intraday price
-  const chunkedProducts = chunk(fetchedProducts, 10);
+  const chunkedProducts = chunk(fetchedProducts, 20);
   for (const chunk of chunkedProducts) {
     const prices = await Promise.all(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
     chunk.forEach((p, i) => {
+      if (prices[i].length < 1) {
+        console.log("No prices for product", p.Code);
+        // @ts-ignore
+        p.underlyingPrice = 0;
+        return;
+      }
       // @ts-ignore
       p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
     });
