@@ -14,6 +14,7 @@ export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<Produc
     ProductClassificationId: "8",
     CalcDateFrom: "2025-07-25",
     CalcDateTo: "2025-12-19",
+    AssetId: "-4", // Oil Brent Futures
   });
   const url = `${SG_API_ENDPOINT}/ProductSearch/Search?${params.toString()}`;
   const res = await fetch(url, {
