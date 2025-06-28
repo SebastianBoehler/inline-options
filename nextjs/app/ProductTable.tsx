@@ -36,7 +36,7 @@ export default function ProductTable() {
 
   useEffect(() => {
     async function getProducts() {
-      const products = await extendedProducts(8);
+      const products = await extendedProducts(5);
       setProducts(products);
       setIsLoading(false);
     }
