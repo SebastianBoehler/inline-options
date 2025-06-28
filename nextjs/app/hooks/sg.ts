@@ -7,7 +7,7 @@ import { differenceInDays } from "date-fns";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
 
-export async function fetchProducts(pageNum = 0, pageSize = 30): Promise<ProductSearchResponse["Products"]> {
+export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<ProductSearchResponse["Products"]> {
   const params = new URLSearchParams({
     PageNum: pageNum.toString(),
     PageSize: pageSize.toString(),
