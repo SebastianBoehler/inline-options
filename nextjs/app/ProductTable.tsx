@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { extendedProducts, getCachedExtendedProducts } from "./hooks/sg";
+import React, { useEffect, useState, useMemo } from "react";
+import { extendedProducts } from "./hooks/sg";
 import { ExtendedProduct } from "./hooks/types";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import BarrierVisualization from "./components/BarrierVisualization";
+import ProductInfoPanel from "./components/ProductInfoPanel";
 
 type SortKey = keyof ExtendedProduct;
 
 const columns: SortKey[] = [
   "Isin",
   "AssetName",
-  "LowerBarrierInlineWarrant",
-  "UpperBarrierInlineWarrant",
+  "diffToLower",
+  "diffToUpper",
   "Bid",
   "Offer",
   "spread",
@@ -29,10 +31,12 @@ export default function ProductTable() {
     direction: "ascending" | "descending";
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   useEffect(() => {
     async function getProducts() {
-      const products = await extendedProducts();
+      const products = await extendedProducts(10);
       setProducts(products);
       setIsLoading(false);
     }
@@ -101,6 +105,9 @@ const getSortIndicator = (key: SortKey) => {
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
               Link
             </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Expand
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -114,21 +121,53 @@ const getSortIndicator = (key: SortKey) => {
             </tr>
           )}
           {sortedProducts.map((product, index) => (
-            <tr key={index}>
-              {columns.map((column) => (
-                <td
-                  key={column}
-                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                >
-                  {product[column] as string}
+            <React.Fragment key={index}>
+              <tr 
+                className={`cursor-pointer transition-colors duration-150 ${
+                  hoveredRow === index || expandedRow === index 
+                    ? 'bg-blue-50' 
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setExpandedRow(expandedRow === index ? null : index)}
+                onMouseEnter={() => setHoveredRow(index)}
+                onMouseLeave={() => setHoveredRow(null)}
+              >
+                {columns.map((column) => (
+                  <td
+                    key={column}
+                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                  >
+                    {product[column] as string}
+                  </td>
+                ))}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                  <Link 
+                    href={`https://www.sg-zertifikate.de/product-details/${product.Code}`} 
+                    target="_blank"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {product.Code}
+                  </Link>
                 </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                <Link href={`https://www.sg-zertifikate.de/product-details/${product.Code}`} target="_blank">
-                  {product.Code}
-                </Link>
-              </td>
-            </tr>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {expandedRow === index ? (
+                    <ChevronUpIcon className="w-5 h-5" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5" />
+                  )}
+                </td>
+              </tr>
+              {expandedRow === index && (
+                <tr>
+                  <td colSpan={columns.length + 2} className="p-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-2">
+                      <BarrierVisualization product={product} />
+                      <ProductInfoPanel product={product} />
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>

@@ -2,6 +2,7 @@
 //bc of cors has to be server side
 import { ProductSearchResponse, HistoryItem, ExtendedProduct } from "./types";
 import { unstable_cache } from "next/cache";
+import { chunk } from "lodash";
 import { differenceInDays } from "date-fns";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
@@ -17,6 +18,7 @@ export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<Produc
   const url = `${SG_API_ENDPOINT}/ProductSearch/Search?${params.toString()}`;
   const res = await fetch(url, {
     headers: {
+      host: "www.sg-zertifikate.de",
       Accept: "application/json",
     },
   });
@@ -28,10 +30,27 @@ export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<Produc
   return json.Products;
 }
 
+export async function fetchProductByCode(productCode: string): Promise<ProductSearchResponse["Products"][number]> {
+  const url = `${SG_API_ENDPOINT}/Products?code=${productCode}`;
+  const res = await fetch(url, {
+    headers: {
+      host: "www.sg-zertifikate.de",
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Product fetch failed: ${res.status} ${res.statusText}`);
+  }
+  const json = (await res.json()) as ProductSearchResponse["Products"][number];
+  return json;
+}
+
 export async function fetchHistory(productId: number): Promise<HistoryItem[]> {
   const url = `${SG_API_ENDPOINT}/Prices/History?productId=${productId}`;
   const res = await fetch(url, {
     headers: {
+      host: "www.sg-zertifikate.de",
       Accept: "application/json",
     },
   });
@@ -40,7 +59,23 @@ export async function fetchHistory(productId: number): Promise<HistoryItem[]> {
     throw new Error(`History fetch failed for product ${productId}: ${res.status} ${res.statusText}`);
   }
   const json = await res.json();
-  console.log(json.length);
+  return json;
+}
+
+export async function fetchProductIntradayPrices(productId: number): Promise<HistoryItem[]> {
+  const url = `${SG_API_ENDPOINT}/Prices/Intraday?productId=${productId}`;
+  const res = await fetch(url, {
+    headers: {
+      host: "www.sg-zertifikate.de",
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Intraday prices fetch failed for product ${productId}: ${res.status} ${res.statusText}`);
+  }
+  const json = await res.json();
+  console.log("Intraday prices for product", json.length);
   return json;
 }
 
@@ -50,17 +85,32 @@ export async function extendedProducts(limit: number = 100, offset: number = 0):
   let pageNum = offset;
   while (!isFinished) {
     const products = await fetchProducts(pageNum);
-    console.log(products.length, pageNum);
+    //console.log(products.length, pageNum);
     fetchedProducts.push(...products);
     if (products.length < 100 || pageNum > limit) {
       isFinished = true;
     }
     pageNum++;
   }
+  //using lodash put into chunks and add underlying price from latest intraday price
+  const chunkedProducts = chunk(fetchedProducts, 10);
+  for (const chunk of chunkedProducts) {
+    const prices = await Promise.all(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
+    chunk.forEach((p, i) => {
+      // @ts-ignore
+      p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
+    });
+  }
+
   const extendedProducts = fetchedProducts.map((p) => {
     const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
     const spread = (p.Offer - p.Bid) / 10;
     const potentialReturn = ((10 - p.Bid) / p.Bid) * 100;
+    // % differences to upper and lower barrier
+    // @ts-ignore
+    const diffToUpper = ((p.UpperBarrierInlineWarrant - p.underlyingPrice) / p.UpperBarrierInlineWarrant) * 100;
+    // @ts-ignore
+    const diffToLower = ((p.LowerBarrierInlineWarrant - p.underlyingPrice) / p.LowerBarrierInlineWarrant) * 100;
     return {
       ...p,
       spread: spread.toFixed(2),
@@ -68,6 +118,8 @@ export async function extendedProducts(limit: number = 100, offset: number = 0):
       daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
       rangePercent: rangePercent.toFixed(2),
       potentialReturn: potentialReturn.toFixed(2) + "%",
+      diffToUpper: diffToUpper.toFixed(2),
+      diffToLower: diffToLower.toFixed(2),
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range

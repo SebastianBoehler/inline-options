@@ -64,4 +64,7 @@ export interface ExtendedProduct extends Product {
   daysRunning: number;
   rangePercent: string;
   potentialReturn: string;
+  underlyingPrice: number;
+  diffToUpper: string;
+  diffToLower: string;
 }
