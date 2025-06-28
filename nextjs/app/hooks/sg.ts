@@ -1,11 +1,43 @@
 "use server";
 //bc of cors has to be server side
-import { ProductSearchResponse, HistoryItem, ExtendedProduct } from "./types";
+import { ProductSearchResponse, HistoryItem, ExtendedProduct, Asset } from "./types";
 import { unstable_cache } from "next/cache";
 import { chunk } from "lodash";
 import { differenceInDays } from "date-fns";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
+
+export async function fetchAssetTypes(): Promise<any> {
+  const url = `${SG_API_ENDPOINT}/ProductSearch/AssetTypes`;
+  const res = await fetch(url, {
+    headers: {
+      host: "www.sg-zertifikate.de",
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Asset type fetch failed: ${res.status} ${res.statusText}`);
+  }
+  const json = await res.json();
+  return json;
+}
+
+export async function fetchAssets(productClass = "8"): Promise<Asset[]> {
+  const url = `${SG_API_ENDPOINT}/ProductSearch/Assets?productClassificationId=${productClass}`;
+  const res = await fetch(url, {
+    headers: {
+      host: "www.sg-zertifikate.de",
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Asset fetch failed: ${res.status} ${res.statusText}`);
+  }
+  const json = await res.json();
+  return json as Asset[];
+}
 
 export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<ProductSearchResponse["Products"]> {
   const params = new URLSearchParams({

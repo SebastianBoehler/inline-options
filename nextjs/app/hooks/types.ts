@@ -56,6 +56,14 @@ export interface HistoryItem {
   UnderlyingPrice: number;
 }
 
+export interface Asset {
+  InstrumentIdentifier: string;
+  DecimalPlaces: number;
+  Ric: string;
+  Id: number;
+  Name: string;
+}
+
 export type Product = ProductSearchResponse["Products"][number];
 
 export interface ExtendedProduct extends Product {
