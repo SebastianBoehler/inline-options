@@ -1,4 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inline Options Viewer – Société Générale
+
+This is a [Next.js](https://nextjs.org) webapp that displays all inline options from Société Générale for analysis purposes. It scrapes and aggregates option data directly from Société Générale endpoints for research and analytical use only.
+
+![Screenshot](screenshots/image.jpg)
+
+---
+
+This project was bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
@@ -34,3 +42,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+
+## Disclaimer
+
+This project scrapes data from public Société Générale endpoints for the sole purpose of analysis and research. This application is not affiliated with or endorsed by Société Générale. Use of the data and endpoints is subject to Société Générale's terms of service and applicable laws. The authors take no responsibility for misuse or unauthorized access. Do not use this project for commercial purposes or in violation of any terms or regulations.
