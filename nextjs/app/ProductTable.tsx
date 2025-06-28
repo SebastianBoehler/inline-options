@@ -24,7 +24,15 @@ const columns: SortKey[] = [
   "daysRunning",
 ];
 
-export default function ProductTable() {
+interface ProductTableProps {
+  limit?: number;
+  offset?: number;
+  calcDateFrom?: string;
+  calcDateTo?: string;
+  assetId?: string;
+}
+
+export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, calcDateTo, assetId }: ProductTableProps) {
   const [products, setProducts] = useState<ExtendedProduct[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: SortKey;
@@ -36,12 +44,16 @@ export default function ProductTable() {
 
   useEffect(() => {
     async function getProducts() {
-      const products = await extendedProducts(1);
+      setIsLoading(true);
+      setExpandedRow(null);
+      setHoveredRow(null);
+      setProducts([]);
+      const products = await extendedProducts({ limit, offset, calcDateFrom, calcDateTo, assetId });
       setProducts(products);
       setIsLoading(false);
     }
     getProducts();
-  }, []);
+  }, [limit, offset, calcDateFrom, calcDateTo, assetId]);
 
   const sortedProducts = useMemo(() => {
     let sortableProducts = [...products];

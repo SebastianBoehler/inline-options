@@ -39,15 +39,24 @@ export async function fetchAssets(productClass = "8"): Promise<Asset[]> {
   return json as Asset[];
 }
 
-export async function fetchProducts(pageNum = 0, pageSize = 100): Promise<ProductSearchResponse["Products"]> {
-  const params = new URLSearchParams({
-    PageNum: pageNum.toString(),
-    PageSize: pageSize.toString(),
+export async function fetchProducts(
+  pageNum = 0,
+  pageSize = 100,
+  calcDateFrom = "2025-07-25",
+  calcDateTo = "2025-12-19",
+  assetId?: string
+): Promise<ProductSearchResponse["Products"]> {
+  const obj: Record<string, string> = {
     ProductClassificationId: "8",
-    CalcDateFrom: "2025-07-25",
-    CalcDateTo: "2025-12-19",
-    AssetId: "-4", // Oil Brent Futures
-  });
+  };
+  if (pageNum) obj["PageNum"] = pageNum.toString();
+  if (pageSize) obj["PageSize"] = pageSize.toString();
+  if (calcDateFrom) obj["CalcDateFrom"] = calcDateFrom;
+  if (calcDateTo) obj["CalcDateTo"] = calcDateTo;
+  if (assetId) obj["AssetId"] = assetId;
+
+  const params = new URLSearchParams(obj);
+
   const url = `${SG_API_ENDPOINT}/ProductSearch/Search?${params.toString()}`;
   const res = await fetch(url, {
     headers: {
@@ -108,19 +117,28 @@ export async function fetchProductIntradayPrices(productId: number): Promise<His
     throw new Error(`Intraday prices fetch failed for product ${productId}: ${res.status} ${res.statusText}`);
   }
   const json = await res.json();
-  console.log("Intraday prices for product", json.length);
+  //console.log("Intraday prices for product", json.length);
   return json;
 }
 
-export async function extendedProducts(limit: number = 100, offset: number = 0): Promise<ExtendedProduct[]> {
+export interface ExtendedProductParams {
+  limit: number;
+  offset: number;
+  calcDateFrom?: string;
+  calcDateTo?: string;
+  assetId?: string;
+}
+
+export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo, assetId }: ExtendedProductParams): Promise<ExtendedProduct[]> {
   const fetchedProducts = [];
   let isFinished = false;
   let pageNum = offset;
+  const pageSize = 25;
   while (!isFinished) {
-    const products = await fetchProducts(pageNum);
-    //console.log(products.length, pageNum);
+    const products = await fetchProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
+    console.log(products.length, pageNum);
     fetchedProducts.push(...products);
-    if (products.length < 100 || pageNum > limit) {
+    if (products.length < 25 || fetchedProducts.length > limit) {
       isFinished = true;
     }
     pageNum++;
@@ -173,7 +191,7 @@ export async function extendedProducts(limit: number = 100, offset: number = 0):
   return extendedProducts;
 }
 
-export const getCachedExtendedProducts = unstable_cache(async (limit?: number, offset?: number) => extendedProducts(limit, offset), [], {
-  tags: ["products"],
-  revalidate: 60 * 60, //1H
-});
+// export const getCachedExtendedProducts = unstable_cache(async (limit?: number, offset?: number) => extendedProducts(limit, offset), [], {
+//   tags: ["products"],
+//   revalidate: 60 * 60, //1H
+// });
