@@ -165,16 +165,16 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const potentialReturn = ((10 - p.Bid) / p.Bid) * 100;
     // % differences to upper and lower barrier
     // @ts-ignore
-    const diffToUpper = ((p.UpperBarrierInlineWarrant - p.underlyingPrice) / p.UpperBarrierInlineWarrant) * 100;
+    const diffToUpper = (p.UpperBarrierInlineWarrant / p.underlyingPrice - 1) * 100;
     // @ts-ignore
-    const diffToLower = ((p.LowerBarrierInlineWarrant - p.underlyingPrice) / p.LowerBarrierInlineWarrant) * 100;
+    const diffToLower = 1 - (p.LowerBarrierInlineWarrant / p.underlyingPrice) * 100;
     return {
       ...p,
       spread: spread.toFixed(2),
       daysUntilExpiry: differenceInDays(new Date(p.MaturityDate), new Date()),
       daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
       rangePercent: rangePercent.toFixed(2),
-      potentialReturn: potentialReturn.toFixed(2) + "%",
+      potentialReturn,
       diffToUpper: diffToUpper.toFixed(2),
       diffToLower: diffToLower.toFixed(2),
     } as ExtendedProduct;

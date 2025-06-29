@@ -71,7 +71,7 @@ export interface ExtendedProduct extends Product {
   daysUntilExpiry: number;
   daysRunning: number;
   rangePercent: string;
-  potentialReturn: string;
+  potentialReturn: number;
   underlyingPrice: number;
   diffToUpper: string;
   diffToLower: string;
