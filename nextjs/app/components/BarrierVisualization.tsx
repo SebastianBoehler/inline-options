@@ -20,7 +20,7 @@ export default function BarrierVisualization({ product }: BarrierVisualizationPr
   const diffToUpperPercent = parseFloat(product.diffToUpper.replace('%', ''));
 
   return (
-    <div className="p-6 border-gray-200">
+    <div className="p-6">
       <div className="max-w-2xl mx-auto">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           {product.AssetName}

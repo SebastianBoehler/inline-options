@@ -7,6 +7,7 @@ import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import BarrierVisualization from "./components/BarrierVisualization";
 import ProductInfoPanel from "./components/ProductInfoPanel";
+import PriceHistoryChart from "./components/PriceHistoryChart";
 
 type SortKey = keyof ExtendedProduct;
 
@@ -172,9 +173,10 @@ const getSortIndicator = (key: SortKey) => {
               {expandedRow === index && (
                 <tr>
                   <td colSpan={columns.length + 2} className="p-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3">
                       <BarrierVisualization product={product} />
                       <ProductInfoPanel product={product} />
+                      <PriceHistoryChart product={product} />
                     </div>
                   </td>
                 </tr>
