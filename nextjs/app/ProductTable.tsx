@@ -41,13 +41,11 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   useEffect(() => {
     async function getProducts() {
       setIsLoading(true);
       setExpandedRow(null);
-      setHoveredRow(null);
       setProducts([]);
       const products = await extendedProducts({ limit, offset, calcDateFrom, calcDateTo, assetId });
       setProducts(products);
@@ -137,13 +135,11 @@ const getSortIndicator = (key: SortKey) => {
             <React.Fragment key={index}>
               <tr 
                 className={`cursor-pointer transition-colors duration-150 ${
-                  hoveredRow === index || expandedRow === index 
+                  expandedRow === index 
                     ? 'bg-blue-50' 
                     : 'hover:bg-gray-50'
                 }`}
                 onClick={() => setExpandedRow(expandedRow === index ? null : index)}
-                onMouseEnter={() => setHoveredRow(index)}
-                onMouseLeave={() => setHoveredRow(null)}
               >
                 {columns.map((column) => (
                   <td
