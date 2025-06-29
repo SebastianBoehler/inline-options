@@ -75,4 +75,6 @@ export interface ExtendedProduct extends Product {
   underlyingPrice: number;
   diffToUpper: string;
   diffToLower: string;
+  volatility: string;
+  bollingerWidth: string;
 }

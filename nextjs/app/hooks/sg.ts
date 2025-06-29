@@ -4,6 +4,7 @@ import { ProductSearchResponse, HistoryItem, ExtendedProduct, Asset } from "./ty
 import { unstable_cache } from "next/cache";
 import { chunk } from "lodash";
 import { differenceInDays } from "date-fns";
+import { StandardDeviation, BollingerBands } from "@debut/indicators";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
 
@@ -121,6 +122,37 @@ export async function fetchProductIntradayPrices(productId: number): Promise<His
   return json;
 }
 
+function calcVolatility(history: HistoryItem[], period = 20) {
+  if (history.length < period + 1) {
+    return { volatility: 0, bollingerWidth: 0 };
+  }
+  const returns: number[] = [];
+  for (let i = 1; i < history.length; i++) {
+    const prev = history[i - 1].UnderlyingPrice;
+    const curr = history[i].UnderlyingPrice;
+    returns.push(Math.log(curr / prev));
+  }
+  const slice = returns.slice(-period);
+  const mean = slice.reduce((a, b) => a + b, 0) / period;
+  const sd = new StandardDeviation(period);
+  let sdVal = 0;
+  slice.forEach((r) => {
+    sdVal = sd.nextValue(r, mean);
+  });
+  const annVol = sdVal * Math.sqrt(252);
+
+  const bb = new BollingerBands(period, 2);
+  let bands: { lower: number; middle: number; upper: number } | undefined;
+  history
+    .slice(-period)
+    .forEach((h) => {
+      const res = bb.nextValue(h.UnderlyingPrice);
+      if (res) bands = res;
+    });
+  const width = bands ? (bands.upper - bands.lower) / bands.middle : 0;
+  return { volatility: annVol, bollingerWidth: width };
+}
+
 export interface ExtendedProductParams {
   limit: number;
   offset: number;
@@ -147,15 +179,22 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   const chunkedProducts = chunk(fetchedProducts, 20);
   for (const chunk of chunkedProducts) {
     const prices = await Promise.all(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
+    const histories = await Promise.all(chunk.map((p) => fetchHistory(p.Id).catch(() => [] as HistoryItem[])));
     chunk.forEach((p, i) => {
       if (prices[i].length < 1) {
         console.log("No prices for product", p.Code);
         // @ts-ignore
         p.underlyingPrice = 0;
-        return;
+      } else {
+        // @ts-ignore
+        p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
       }
+
+      const { volatility, bollingerWidth } = calcVolatility(histories[i]);
       // @ts-ignore
-      p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
+      p.volatility = volatility;
+      // @ts-ignore
+      p.bollingerWidth = bollingerWidth;
     });
   }
 
@@ -177,6 +216,8 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       potentialReturn,
       diffToUpper: diffToUpper.toFixed(2),
       diffToLower: diffToLower.toFixed(2),
+      volatility: Number((p as any).volatility ?? 0).toFixed(4),
+      bollingerWidth: Number((p as any).bollingerWidth ?? 0).toFixed(4),
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range

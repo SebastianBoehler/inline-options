@@ -40,6 +40,20 @@ export default function ProductInfoPanel({ product }: ProductInfoPanelProps) {
             </div>
           </div>
 
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="font-medium text-gray-700 mb-3">Indicators</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-gray-500">Volatility</div>
+                <div className="font-bold">{product.volatility}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Bollinger Width</div>
+                <div className="font-bold">{product.bollingerWidth}</div>
+              </div>
+            </div>
+          </div>
+
           {/* Product Details */}
           <div className="bg-gray-50 p-4 rounded-lg min-w-[200px]">
             <h4 className="font-medium text-gray-700 mb-3">Product Details</h4>
