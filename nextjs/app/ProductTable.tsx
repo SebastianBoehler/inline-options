@@ -23,6 +23,8 @@ const columns: SortKey[] = [
   "potentialReturn",
   "daysUntilExpiry",
   "daysRunning",
+  "volatility",
+  "bollingerWidth",
 ];
 
 interface ProductTableProps {
