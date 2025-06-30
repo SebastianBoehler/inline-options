@@ -4,6 +4,7 @@
     "": {
       "name": "temp-webapp",
       "dependencies": {
+        "@debut/indicators": "^1.3.22",
         "@heroicons/react": "^2.2.0",
         "date-fns": "^4.1.0",
         "lodash": "^4.17.21",
@@ -27,6 +28,8 @@
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
+
+    "@debut/indicators": ["@debut/indicators@1.3.22", "", {}, "sha512-yYq/hb5XrdAWtenVYoHNQuCBxkC4gQXRgsdx9Mpbv1Mdg1ZaiQ7bdzy1TF5EJxIFq1iHHEGp3fjL5WpVenjp1Q=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.4.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-pBPWdu6MLKROBX05wSNKcNb++m5Er+KQ9QkB+WVM+pW2Kx9hoSrVTnu3BdkI5eBLZoKu/J6mW/B6i6bJB2ytXQ=="],
 
