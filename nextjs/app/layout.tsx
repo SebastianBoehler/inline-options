@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NavBar from "./components/NavBar";
 
 export const metadata: Metadata = {
   title: "Inline Options",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <NavBar />
         {children}
       </body>
     </html>

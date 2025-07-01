@@ -130,7 +130,7 @@ export default function OptionHistoryOverlayChart({
             dataKey="avg"
             name="Average Bid"
             stroke="#000000"
-            strokeWidth={2}
+            strokeWidth={3}
             dot={false}
             hide={hiddenSeries["avg"]}
           />
