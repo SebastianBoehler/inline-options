@@ -3,6 +3,7 @@ import { fetchAssets } from "./hooks/sg";
 import ProductTable from "./ProductTable";
 import { useEffect, useRef, useState } from "react";
 import { Asset } from "./hooks/types";
+import { addDays } from "date-fns";
 
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -10,7 +11,7 @@ export default function Home() {
   const [offset, setOffset] = useState(0);
   const currentDate = useRef(new Date().toISOString().split('T')[0]);
   const [calcDateFrom, setCalcDateFrom] = useState(currentDate.current);
-  const [calcDateTo, setCalcDateTo] = useState("2025-07-19");
+  const [calcDateTo, setCalcDateTo] = useState(addDays(new Date(), 30).toISOString().split('T')[0]);
   const [assetId, setAssetId] = useState<string | undefined>(undefined); // "-4"
 
   useEffect(() => {
