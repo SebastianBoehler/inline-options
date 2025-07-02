@@ -1,6 +1,7 @@
 "use client";
 import { fetchAssets } from "../hooks/sg";
 import { useEffect, useState, useRef } from "react";
+import useDebounce from "../hooks/useDebounce";
 import { Asset } from "../hooks/types";
 import OptionHistoryOverlayChart from "../components/OptionHistoryOverlayChart";
 
@@ -11,6 +12,11 @@ export default function OptionHistoryPage() {
   const currentDate = useRef(new Date().toISOString().split("T")[0]);
   const [calcDateFrom, setCalcDateFrom] = useState<string>(currentDate.current);
   const [calcDateTo, setCalcDateTo] = useState<string>("2025-12-31");
+
+  const debouncedAssetId = useDebounce(assetId);
+  const debouncedLimit = useDebounce(limit);
+  const debouncedCalcDateFrom = useDebounce(calcDateFrom);
+  const debouncedCalcDateTo = useDebounce(calcDateTo);
 
   useEffect(() => {
     async function loadAssets() {
@@ -92,10 +98,10 @@ export default function OptionHistoryPage() {
 
       {isValid ? (
         <OptionHistoryOverlayChart
-          assetId={assetId}
-          limit={limit}
-          calcDateFrom={calcDateFrom}
-          calcDateTo={calcDateTo}
+          assetId={debouncedAssetId}
+          limit={debouncedLimit}
+          calcDateFrom={debouncedCalcDateFrom}
+          calcDateTo={debouncedCalcDateTo}
         />
       ) : (
         <div className="text-red-500">Please select an asset to load data.</div>
