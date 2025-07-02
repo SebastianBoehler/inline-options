@@ -122,17 +122,22 @@ export async function fetchProductIntradayPrices(productId: number): Promise<His
   return json;
 }
 
-function calcVolatility(history: HistoryItem[], period = 20) {
+function calcMetrics(history: HistoryItem[], period = 20, confidence = 0.95) {
   if (history.length < period + 1) {
-    return { volatility: 0, bollingerWidth: 0 };
+    return { volatility: 0, bollingerWidth: 0, var95: 0 };
   }
-  const returns: number[] = [];
+  const underlyingReturns: number[] = [];
+  const optionReturns: number[] = [];
   for (let i = 1; i < history.length; i++) {
-    const prev = history[i - 1].UnderlyingPrice;
-    const curr = history[i].UnderlyingPrice;
-    returns.push(Math.log(curr / prev));
+    const prevUnderlying = history[i - 1].UnderlyingPrice;
+    const currUnderlying = history[i].UnderlyingPrice;
+    underlyingReturns.push(Math.log(currUnderlying / prevUnderlying));
+
+    const prevBid = history[i - 1].Bid;
+    const currBid = history[i].Bid;
+    optionReturns.push(Math.log(currBid / prevBid));
   }
-  const slice = returns.slice(-period);
+  const slice = underlyingReturns.slice(-period);
   const mean = slice.reduce((a, b) => a + b, 0) / period;
   const sd = new StandardDeviation(period);
   let sdVal = 0;
@@ -143,14 +148,19 @@ function calcVolatility(history: HistoryItem[], period = 20) {
 
   const bb = new BollingerBands(period, 2);
   let bands: { lower: number; middle: number; upper: number } | undefined;
-  history
-    .slice(-period)
-    .forEach((h) => {
-      const res = bb.nextValue(h.UnderlyingPrice);
-      if (res) bands = res;
-    });
+  history.slice(-period).forEach((h) => {
+    const res = bb.nextValue(h.UnderlyingPrice);
+    if (res) bands = res;
+  });
   const width = bands ? (bands.upper - bands.lower) / bands.middle : 0;
-  return { volatility: annVol, bollingerWidth: width };
+
+  const returnsSlice = optionReturns.slice(-period).sort((a, b) => a - b);
+  const idx = Math.floor((1 - confidence) * returnsSlice.length);
+  const varReturn = returnsSlice[idx] ?? 0;
+  const lastBid = history[history.length - 1].Bid;
+  const var95 = -varReturn * lastBid;
+
+  return { volatility: annVol, bollingerWidth: width, var95 };
 }
 
 export interface ExtendedProductParams {
@@ -190,11 +200,13 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
         p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
       }
 
-      const { volatility, bollingerWidth } = calcVolatility(histories[i]);
+      const { volatility, bollingerWidth, var95 } = calcMetrics(histories[i]);
       // @ts-ignore
       p.volatility = volatility;
       // @ts-ignore
       p.bollingerWidth = bollingerWidth;
+      // @ts-ignore
+      p.var95 = var95;
     });
   }
 
@@ -218,6 +230,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       diffToLower: diffToLower.toFixed(2),
       volatility: Number((p as any).volatility ?? 0).toFixed(4),
       bollingerWidth: Number((p as any).bollingerWidth ?? 0).toFixed(4),
+      var95: Number((p as any).var95 ?? 0).toFixed(4),
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range

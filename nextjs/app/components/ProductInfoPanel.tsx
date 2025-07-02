@@ -73,6 +73,10 @@ export default function ProductInfoPanel({ product }: ProductInfoPanelProps) {
                 <div className="text-gray-500">Bollinger Width</div>
                 <div className="font-bold">{product.bollingerWidth}</div>
               </div>
+              <div>
+                <div className="text-gray-500">VaR 95%</div>
+                <div className="font-bold">{product.var95}</div>
+              </div>
             </div>
           </div>
 
