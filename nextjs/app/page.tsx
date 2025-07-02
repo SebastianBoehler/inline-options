@@ -2,6 +2,7 @@
 import { fetchAssets } from "./hooks/sg";
 import ProductTable from "./ProductTable";
 import { useEffect, useRef, useState } from "react";
+import useDebounce from "./hooks/useDebounce";
 import { Asset } from "./hooks/types";
 import { addDays } from "date-fns";
 
@@ -13,6 +14,12 @@ export default function Home() {
   const [calcDateFrom, setCalcDateFrom] = useState(currentDate.current);
   const [calcDateTo, setCalcDateTo] = useState(addDays(new Date(), 30).toISOString().split('T')[0]);
   const [assetId, setAssetId] = useState<string | undefined>(undefined); // "-4"
+
+  const debouncedLimit = useDebounce(limit);
+  const debouncedOffset = useDebounce(offset);
+  const debouncedCalcDateFrom = useDebounce(calcDateFrom);
+  const debouncedCalcDateTo = useDebounce(calcDateTo);
+  const debouncedAssetId = useDebounce(assetId);
 
   useEffect(() => {
     async function getAssets() {
@@ -89,11 +96,11 @@ export default function Home() {
         </div>
       </form>
       <ProductTable
-        limit={limit}
-        offset={offset}
-        calcDateFrom={calcDateFrom}
-        calcDateTo={calcDateTo}
-        assetId={assetId}
+        limit={debouncedLimit}
+        offset={debouncedOffset}
+        calcDateFrom={debouncedCalcDateFrom}
+        calcDateTo={debouncedCalcDateTo}
+        assetId={debouncedAssetId}
       />
     </main>
   );
