@@ -142,7 +142,7 @@ const getSortIndicator = (key: SortKey) => {
                   expandedRow === index 
                     ? 'bg-blue-50' 
                     : 'hover:bg-gray-50'
-                } ${product.Offer === 0 ? 'bg-red-200' : ''}`}
+                } ${product.Offer === 0 ? 'bg-red-300 hover:bg-red-200' : ''}`}
                 onClick={() => setExpandedRow(expandedRow === index ? null : index)}
               >
                 {columns.map((column) => (

@@ -40,6 +40,11 @@ export async function fetchAssets(productClass = "8"): Promise<Asset[]> {
   return json as Asset[];
 }
 
+export const getCachedAssets = unstable_cache(fetchAssets, ["assets"], {
+  tags: ["assets"],
+  revalidate: 60 * 60 * 24,
+});
+
 export async function fetchProducts(
   pageNum = 0,
   pageSize = 100,
@@ -240,7 +245,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   const extendedProducts = fetchedProducts.map((p) => {
     const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
     const spread = (p.Offer - p.Bid) / 10;
-    const potentialReturn = ((10 - p.Bid) / p.Bid) * 100;
+    const potentialReturn = ((10 - p.Offer) / p.Offer) * 100;
     // % differences to upper and lower barrier
     // @ts-ignore
     const diffToUpper = (p.UpperBarrierInlineWarrant / p.underlyingPrice - 1) * 100;
