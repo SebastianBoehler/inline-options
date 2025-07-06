@@ -67,7 +67,8 @@ export async function fetchProducts(
   });
 
   if (!res.ok) {
-    throw new Error(`Product fetch failed: ${res.status} ${res.statusText}`);
+    console.error(`Product fetch failed: ${res.status} ${res.statusText}`);
+    return [];
   }
   const json = (await res.json()) as ProductSearchResponse;
   return json.Products;
@@ -188,19 +189,31 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   //using lodash put into chunks and add underlying price from latest intraday price
   const chunkedProducts = chunk(fetchedProducts, 20);
   for (const chunk of chunkedProducts) {
-    const prices = await Promise.all(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
-    const histories = await Promise.all(chunk.map((p) => fetchHistory(p.Id).catch(() => [] as HistoryItem[])));
+    const prices = await Promise.allSettled(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
+    const histories = await Promise.allSettled(chunk.map((p) => fetchHistory(p.Id)));
     chunk.forEach((p, i) => {
-      if (prices[i].length < 1) {
-        console.log("No prices for product", p.Code);
+      if (prices[i].status === "rejected" || histories[i].status === "rejected") {
+        console.log("No intradayprices for product", p);
+        // @ts-ignore
+        p.underlyingPrice = 0;
+        // @ts-ignore
+        p.volatility = 0;
+        // @ts-ignore
+        p.bollingerWidth = 0;
+        // @ts-ignore
+        p.var95 = 0;
+        return;
+      }
+      if (prices[i].value.length < 1) {
+        //console.log("No intraday prices for product", p.Code);
         // @ts-ignore
         p.underlyingPrice = 0;
       } else {
         // @ts-ignore
-        p.underlyingPrice = prices[i][prices[i].length - 1].UnderlyingPrice;
+        p.underlyingPrice = prices[i].value[prices[i].value.length - 1].UnderlyingPrice;
       }
 
-      const { volatility, bollingerWidth, var95 } = calcMetrics(histories[i]);
+      const { volatility, bollingerWidth, var95 } = calcMetrics(histories[i].value);
       // @ts-ignore
       p.volatility = volatility;
       // @ts-ignore
