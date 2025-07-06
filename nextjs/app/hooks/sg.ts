@@ -3,7 +3,7 @@
 import { ProductSearchResponse, HistoryItem, ExtendedProduct, Asset } from "./types";
 import { unstable_cache } from "next/cache";
 import { chunk } from "lodash";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, differenceInMinutes } from "date-fns";
 import { StandardDeviation, BollingerBands } from "@debut/indicators";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
@@ -172,6 +172,34 @@ export interface ExtendedProductParams {
   assetId?: string;
 }
 
+const priceCache = new Map<string, { price: number; timestamp: Date }>();
+export const getUnderylingPrice = async (product: ProductSearchResponse["Products"][number]): Promise<number> => {
+  const cached = priceCache.get(product.AssetRic);
+  if (cached) {
+    const diff = differenceInMinutes(new Date(), cached.timestamp);
+    if (diff < 30) return cached.price;
+  }
+  const intradayPrice = await fetchProductIntradayPrices(product.Id)
+    .then((prices) => prices[prices.length - 1].UnderlyingPrice)
+    .catch(() => null);
+
+  if (intradayPrice) {
+    priceCache.set(product.AssetRic, { price: intradayPrice, timestamp: new Date() });
+    return intradayPrice;
+  }
+
+  const history = await fetchHistory(product.Id)
+    .then((prices) => prices[prices.length - 1].UnderlyingPrice)
+    .catch(() => null);
+
+  if (history) {
+    priceCache.set(product.AssetRic, { price: history, timestamp: new Date() });
+    return history;
+  }
+
+  return 0;
+};
+
 export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo, assetId }: ExtendedProductParams): Promise<ExtendedProduct[]> {
   const fetchedProducts = [];
   let isFinished = false;
@@ -181,38 +209,24 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const products = await fetchProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
     console.log(products.length, pageNum);
     fetchedProducts.push(...products);
-    if (products.length < 25 || fetchedProducts.length >= limit) {
+    if (products.length < pageSize || fetchedProducts.length >= limit) {
       isFinished = true;
     }
     pageNum++;
   }
+  for (const product of fetchedProducts) {
+    const price = await getUnderylingPrice(product);
+    // @ts-ignore
+    product.underlyingPrice = price;
+  }
   //using lodash put into chunks and add underlying price from latest intraday price
   const chunkedProducts = chunk(fetchedProducts, 20);
   for (const chunk of chunkedProducts) {
-    const prices = await Promise.allSettled(chunk.map((p) => fetchProductIntradayPrices(p.Id)));
     const histories = await Promise.allSettled(chunk.map((p) => fetchHistory(p.Id)));
     chunk.forEach((p, i) => {
-      if (prices[i].status === "rejected" || histories[i].status === "rejected") {
-        console.log("No intradayprices for product", p);
-        // @ts-ignore
-        p.underlyingPrice = 0;
-        // @ts-ignore
-        p.volatility = 0;
-        // @ts-ignore
-        p.bollingerWidth = 0;
-        // @ts-ignore
-        p.var95 = 0;
+      if (histories[i].status === "rejected") {
         return;
       }
-      if (prices[i].value.length < 1) {
-        //console.log("No intraday prices for product", p.Code);
-        // @ts-ignore
-        p.underlyingPrice = 0;
-      } else {
-        // @ts-ignore
-        p.underlyingPrice = prices[i].value[prices[i].value.length - 1].UnderlyingPrice;
-      }
-
       const { volatility, bollingerWidth, var95 } = calcMetrics(histories[i].value);
       // @ts-ignore
       p.volatility = volatility;
