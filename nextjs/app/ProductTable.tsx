@@ -3,15 +3,19 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { extendedProducts } from "./hooks/sg";
 import { ExtendedProduct } from "./hooks/types";
+import { addScoreColumn } from "@/lib/scorer";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import BarrierVisualization from "./components/BarrierVisualization";
 import ProductInfoPanel from "./components/ProductInfoPanel";
 import PriceHistoryChart from "./components/PriceHistoryChart";
 
-type SortKey = keyof ExtendedProduct;
+type SortKey = keyof ExtendedProduct | "score";
+
+type ScoredProduct = ExtendedProduct & { score: number };
 
 const columns: SortKey[] = [
+  "score",
   "Isin",
   "AssetName",
   "diffToLower",
@@ -58,8 +62,10 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
     getProducts();
   }, [limit, offset, calcDateFrom, calcDateTo, assetId]);
 
-  const sortedProducts = useMemo(() => {
-    let sortableProducts = [...products];
+  const scoredProducts: ScoredProduct[] = useMemo(() => addScoreColumn(products), [products]);
+
+  const sortedProducts: ScoredProduct[] = useMemo(() => {
+    let sortableProducts = [...scoredProducts];
     if (sortConfig !== null) {
       sortableProducts.sort((a, b) => {
         // @ts-ignore
@@ -74,7 +80,7 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
       });
     }
     return sortableProducts;
-  }, [products, sortConfig]);
+  }, [scoredProducts, sortConfig]);
 
   const requestSort = (key: SortKey) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -150,7 +156,9 @@ const getSortIndicator = (key: SortKey) => {
                     key={column}
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                   >
-                    {product[column] as string}
+                    {column === 'score'
+                      ? product.score.toFixed(3)
+                      : (product[column] as string)}
                   </td>
                 ))}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
