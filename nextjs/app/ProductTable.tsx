@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { extendedProducts } from "./hooks/sg";
 import { ExtendedProduct } from "./hooks/types";
 import { addScoreColumn } from "@/lib/scorer";
@@ -82,6 +83,21 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
     return sortableProducts;
   }, [scoredProducts, sortConfig]);
 
+  const downloadExcel = () => {
+    const rows = sortedProducts.map((p) => {
+      const row: Record<string, string | number> = {};
+      columns.forEach((c) => {
+        row[c] = c === "score" ? p.score.toFixed(3) : (p as any)[c];
+      });
+      row["Code"] = p.Code;
+      return row;
+    });
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+    XLSX.writeFile(workbook, "products.xlsx");
+  };
+
   const requestSort = (key: SortKey) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
@@ -106,7 +122,14 @@ const getSortIndicator = (key: SortKey) => {
 };
 
   return (
-    <div className="mx-auto w-full h-[70vh] overflow-x-auto">
+    <div className="mx-auto w-full">
+      <button
+        onClick={downloadExcel}
+        className="mb-2 px-3 py-2 bg-blue-500 text-white rounded"
+      >
+        Download Excel
+      </button>
+      <div className="h-[70vh] overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -193,6 +216,7 @@ const getSortIndicator = (key: SortKey) => {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
