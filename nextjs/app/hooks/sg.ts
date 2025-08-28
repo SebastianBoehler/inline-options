@@ -246,11 +246,20 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
     const spread = (p.Offer - p.Bid) / 10;
     const potentialReturn = ((10 - p.Offer) / p.Offer) * 100;
-    // % differences to upper and lower barrier
+    // % differences to upper and lower barrier (relative to current underlying price)
+    // Guard against missing/zero underlying price to avoid NaN/Infinity
     // @ts-ignore
-    const diffToUpper = (p.UpperBarrierInlineWarrant / p.underlyingPrice - 1) * 100;
+    const hasUnderlying = Number(p.underlyingPrice) > 0;
     // @ts-ignore
-    const diffToLower = 1 - (p.LowerBarrierInlineWarrant / p.underlyingPrice) * 100;
+    const diffToUpper = hasUnderlying
+      // (Upper - Price) / Price * 100
+      ? ((p.UpperBarrierInlineWarrant / p.underlyingPrice) - 1) * 100
+      : 0;
+    // @ts-ignore
+    const diffToLower = hasUnderlying
+      // (Price - Lower) / Price * 100
+      ? (1 - (p.LowerBarrierInlineWarrant / p.underlyingPrice)) * 100
+      : 0;
     return {
       ...p,
       spread: spread.toFixed(2),
