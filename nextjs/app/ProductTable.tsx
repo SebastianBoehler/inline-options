@@ -11,12 +11,13 @@ import BarrierVisualization from "./components/BarrierVisualization";
 import ProductInfoPanel from "./components/ProductInfoPanel";
 import PriceHistoryChart from "./components/PriceHistoryChart";
 
-type SortKey = keyof ExtendedProduct | "score";
+type SortKey = keyof ExtendedProduct | "score" | "optiz formula";
 
-type ScoredProduct = ExtendedProduct & { score: number };
+type ScoredProduct = ExtendedProduct & { score: number; "optiz formula": number };
 
 const columns: SortKey[] = [
   "score",
+  "optiz formula",
   "Isin",
   "AssetName",
   "diffToLower",
@@ -87,7 +88,13 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
     const rows = sortedProducts.map((p) => {
       const row: Record<string, string | number> = {};
       columns.forEach((c) => {
-        row[c] = c === "score" ? p.score.toFixed(3) : (p as any)[c];
+        if (c === "score") {
+          row[c] = p.score.toFixed(3);
+        } else if (c === "optiz formula") {
+          row[c] = (p["optiz formula"] as number).toFixed(3);
+        } else {
+          row[c] = (p as any)[c];
+        }
       });
       row["Code"] = p.Code;
       return row;
@@ -181,7 +188,9 @@ const getSortIndicator = (key: SortKey) => {
                   >
                     {column === 'score'
                       ? product.score.toFixed(3)
-                      : (product[column] as string)}
+                      : column === 'optiz formula'
+                        ? (product["optiz formula"] as number).toFixed(3)
+                        : (product[column] as string)}
                   </td>
                 ))}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
