@@ -248,17 +248,15 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const potentialReturn = ((10 - p.Offer) / p.Offer) * 100;
     // % differences to upper and lower barrier (relative to current underlying price)
     // Guard against missing/zero underlying price to avoid NaN/Infinity
-    // @ts-ignore
-    const hasUnderlying = Number(p.underlyingPrice) > 0;
-    // @ts-ignore
+    const price = Number((p as any).underlyingPrice ?? 0);
+    const hasUnderlying = price > 0;
     const diffToUpper = hasUnderlying
       // (Upper - Price) / Price * 100
-      ? ((p.UpperBarrierInlineWarrant / p.underlyingPrice) - 1) * 100
+      ? (p.UpperBarrierInlineWarrant / price - 1) * 100
       : 0;
-    // @ts-ignore
     const diffToLower = hasUnderlying
       // (Price - Lower) / Price * 100
-      ? (1 - (p.LowerBarrierInlineWarrant / p.underlyingPrice)) * 100
+      ? (1 - p.LowerBarrierInlineWarrant / price) * 100
       : 0;
     return {
       ...p,
