@@ -137,7 +137,7 @@ export default function OptionHistoryOverlayChart({
           />
           {productCodes.map((code, idx) => (
             <Line
-              key={code}
+              key={idx}
               type="monotone"
               dataKey={code}
               name={code}
