@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import useDebounce from "../hooks/useDebounce";
 import { Asset } from "../hooks/types";
 import OptionHistoryOverlayChart from "../components/OptionHistoryOverlayChart";
+import Container from "../components/ui/Container";
+import Card from "../components/ui/Card";
+import Field from "../components/ui/Field";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
 
 export default function OptionHistoryPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -30,82 +35,69 @@ export default function OptionHistoryPage() {
   const isValid = assetId !== "";
 
   return (
-    <main className="p-6 mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Option Price History Overlay</h1>
-      <form
-        className="flex flex-wrap gap-4 mb-8 items-end bg-gray-50 p-4 rounded-lg shadow-sm"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <div className="flex flex-col">
-          <label htmlFor="assetId" className="text-xs font-medium text-gray-700 mb-1">
-            Asset
-          </label>
-          <select
-            id="assetId"
-            value={assetId}
-            onChange={(e) => setAssetId(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-56"
-            required
-          >
-            <option value="" disabled>
-              Select an asset
-            </option>
-            {assets.map((asset) => (
-              <option key={asset.Id} value={asset.Id}>
-                {asset.Name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col">
-          <label htmlFor="limit" className="text-xs font-medium text-gray-700 mb-1">
-            Product Limit
-          </label>
-          <input
-            id="limit"
-            type="number"
-            min={1}
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-32"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label htmlFor="calcDateFrom" className="text-xs font-medium text-gray-700 mb-1">
-            Date From
-          </label>
-          <input
-            id="calcDateFrom"
-            type="date"
-            value={calcDateFrom}
-            onChange={(e) => setCalcDateFrom(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-44"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label htmlFor="calcDateTo" className="text-xs font-medium text-gray-700 mb-1">
-            Date To
-          </label>
-          <input
-            id="calcDateTo"
-            type="date"
-            value={calcDateTo}
-            onChange={(e) => setCalcDateTo(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-44"
-          />
-        </div>
-      </form>
+    <main>
+      <Container className="py-6">
+        <h1 className="text-xl font-semibold mb-4">Option Price History</h1>
+        <Card className="mb-6 p-4">
+          <form className="grid grid-cols-2 md:grid-cols-4 gap-4" onSubmit={(e) => e.preventDefault()}>
+            <Field label="Asset" htmlFor="assetId">
+              <Select
+                id="assetId"
+                value={assetId}
+                onChange={(e) => setAssetId(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select an asset
+                </option>
+                {assets.map((asset) => (
+                  <option key={asset.Id} value={asset.Id}>
+                    {asset.Name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Product Limit" htmlFor="limit">
+              <Input
+                id="limit"
+                type="number"
+                min={1}
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value))}
+              />
+            </Field>
+            <Field label="Date From" htmlFor="calcDateFrom">
+              <Input
+                id="calcDateFrom"
+                type="date"
+                value={calcDateFrom}
+                onChange={(e) => setCalcDateFrom(e.target.value)}
+              />
+            </Field>
+            <Field label="Date To" htmlFor="calcDateTo">
+              <Input
+                id="calcDateTo"
+                type="date"
+                value={calcDateTo}
+                onChange={(e) => setCalcDateTo(e.target.value)}
+              />
+            </Field>
+          </form>
+        </Card>
 
-      {isValid ? (
-        <OptionHistoryOverlayChart
-          assetId={debouncedAssetId}
-          limit={debouncedLimit}
-          calcDateFrom={debouncedCalcDateFrom}
-          calcDateTo={debouncedCalcDateTo}
-        />
-      ) : (
-        <div className="text-red-500">Please select an asset to load data.</div>
-      )}
+        {isValid ? (
+          <Card className="p-4">
+            <OptionHistoryOverlayChart
+              assetId={debouncedAssetId}
+              limit={debouncedLimit}
+              calcDateFrom={debouncedCalcDateFrom}
+              calcDateTo={debouncedCalcDateTo}
+            />
+          </Card>
+        ) : (
+          <div className="text-rose-600">Please select an asset to load data.</div>
+        )}
+      </Container>
     </main>
   );
 }

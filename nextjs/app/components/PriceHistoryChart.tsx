@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { ExtendedProduct } from "../hooks/types";
 import { fetchHistory } from "../hooks/sg";
+import Spinner from "../components/ui/Spinner";
 
 interface PriceHistoryChartProps {
   product: ExtendedProduct;
@@ -61,7 +62,7 @@ export default function PriceHistoryChart({ product }: PriceHistoryChartProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full p-4">
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900" />
+        <Spinner />
       </div>
     );
   }
@@ -71,7 +72,7 @@ export default function PriceHistoryChart({ product }: PriceHistoryChartProps) {
   }
 
   return (
-    <div className="w-full h-64 p-4 h-full border-l border-gray-200">
+    <div className="w-full h-64 p-4 h-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
           <Legend onClick={handleLegendClick} />

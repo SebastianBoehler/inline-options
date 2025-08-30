@@ -13,6 +13,7 @@ import {
 import { extendedProducts } from "../hooks/sg";
 import { ExtendedProduct, HistoryItem } from "../hooks/types";
 import { fetchHistory } from "../hooks/sg";
+import Spinner from "../components/ui/Spinner";
 
 interface OptionHistoryOverlayChartProps {
   assetId: string;
@@ -97,7 +98,7 @@ export default function OptionHistoryOverlayChart({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900" />
+        <Spinner />
       </div>
     );
   }
