@@ -78,4 +78,9 @@ export interface ExtendedProduct extends Product {
   volatility: string;
   bollingerWidth: string;
   var95: string;
+  probStay: string;
+  expectedProfit: string;
+  expectedReturnPct: string;
+  sigmaDistanceLower: string;
+  sigmaDistanceUpper: string;
 }

@@ -30,9 +30,18 @@ export function addScoreColumn<
     diffToLower: string | number;
     diffToUpper: string | number;
     daysUntilExpiry: number;
+    probStay: string | number;
+    expectedReturnPct: string | number;
+    sigmaDistanceLower: string | number;
+    sigmaDistanceUpper: string | number;
   }
->(rows: T[], weights: ScoreWeights = { wR: 0.25, wD: 0.2, wB: 0.15, wV: 0.15, wT: 0.25 }): (T & { score: number; "optiz formula": number })[] {
+>(rows: T[], weights: ScoreWeights = { wR: 0.25, wD: 0.2, wB: 0.15, wV: 0.15, wT: 0.25 }): (T & { score: number; optimizedScore: number; "optiz formula": number })[] {
   if (!rows.length) return [];
+
+  const safeNumber = (value: string | number) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : 0;
+  };
 
   const getD = (r: T) => Math.min(Number(r.diffToLower), Number(r.diffToUpper));
 
@@ -42,6 +51,15 @@ export function addScoreColumn<
     V: Math.min(...rows.map((r) => Number(r.var95))),
     D: Math.min(...rows.map(getD)),
     T: Math.min(...rows.map((r) => r.daysUntilExpiry)),
+    Prob: Math.min(...rows.map((r) => safeNumber(r.probStay))),
+    ER: Math.min(...rows.map((r) => safeNumber(r.expectedReturnPct))),
+    Sigma: Math.min(
+      ...rows.map((r) => {
+        const lower = safeNumber(r.sigmaDistanceLower);
+        const upper = safeNumber(r.sigmaDistanceUpper);
+        return Math.min(lower, upper);
+      })
+    ),
   };
   const maxs = {
     R: Math.max(...rows.map((r) => r.potentialReturn)),
@@ -50,6 +68,15 @@ export function addScoreColumn<
     D: Math.max(...rows.map(getD)),
     T: Math.max(...rows.map((r) => r.daysUntilExpiry)),
     P: Math.max(...rows.map((r) => r.Offer)),
+    Prob: Math.max(...rows.map((r) => safeNumber(r.probStay))),
+    ER: Math.max(...rows.map((r) => safeNumber(r.expectedReturnPct))),
+    Sigma: Math.max(
+      ...rows.map((r) => {
+        const lower = safeNumber(r.sigmaDistanceLower);
+        const upper = safeNumber(r.sigmaDistanceUpper);
+        return Math.min(lower, upper);
+      })
+    ),
   };
 
   const mm = (x: number, min: number, max: number) => (max === min ? 0.5 : (x - min) / (max - min));
@@ -61,6 +88,10 @@ export function addScoreColumn<
     const Dval = getD(r);
     const Dp = mm(Dval, mins.D, maxs.D);
     const Tp = mm(r.daysUntilExpiry, mins.T, maxs.T);
+    const Prob = mm(safeNumber(r.probStay), mins.Prob, maxs.Prob);
+    const ExpRet = mm(safeNumber(r.expectedReturnPct), mins.ER, maxs.ER);
+    const sigmaBase = Math.min(safeNumber(r.sigmaDistanceLower), safeNumber(r.sigmaDistanceUpper));
+    const Sigma = mm(sigmaBase, mins.Sigma, maxs.Sigma);
 
     const Pfactor = 1 - r.Offer / maxs.P;
 
@@ -68,6 +99,8 @@ export function addScoreColumn<
 
     const eigener = calculateEigenerScore(r.potentialReturn, r.Offer, r.bollingerWidth, r.var95);
 
-    return { ...r, score: s, ["optiz formula"]: eigener };
+    const optimized = 0.45 * Prob + 0.3 * ExpRet + 0.15 * Sigma + 0.1 * (1 - Vp);
+
+    return { ...r, score: s, optimizedScore: optimized, ["optiz formula"]: eigener };
   });
 }

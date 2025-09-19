@@ -22,11 +22,13 @@ export default function NavBar() {
             <div className="hidden sm:flex items-center gap-1">
               <Link href="/" className={linkClass("/")}>Dashboard</Link>
               <Link href="/option-history" className={linkClass("/option-history")}>Option History</Link>
+              <Link href="/metrics" className={linkClass("/metrics")}>Metrics</Link>
             </div>
           </div>
           <div className="sm:hidden flex items-center gap-1">
             <Link href="/" className={linkClass("/")}>Dashboard</Link>
             <Link href="/option-history" className={linkClass("/option-history")}>History</Link>
+            <Link href="/metrics" className={linkClass("/metrics")}>Metrics</Link>
           </div>
         </div>
       </Container>

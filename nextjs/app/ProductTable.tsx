@@ -13,29 +13,30 @@ import PriceHistoryChart from "./components/PriceHistoryChart";
 import Card from "./components/ui/Card";
 import Spinner from "./components/ui/Spinner";
 import Button from "./components/ui/Button";
+import { ColumnConfig, columnConfigs, ScoredProduct, SortKey } from "./ColumnsConfig";
 
-type SortKey = keyof ExtendedProduct | "score" | "optiz formula";
 
-type ScoredProduct = ExtendedProduct & { score: number; "optiz formula": number };
+const columns: SortKey[] = columnConfigs.map(({ key }) => key);
 
-const columns: SortKey[] = [
-  "score",
-  "optiz formula",
-  "Isin",
-  "AssetName",
-  "diffToLower",
-  "diffToUpper",
-  "Bid",
-  "Offer",
-  "spread",
-  "rangePercent",
-  "potentialReturn",
-  "daysUntilExpiry",
-  "daysRunning",
-  "volatility",
-  "bollingerWidth",
-  "var95",
-];
+const resolveCellValue = (
+  product: ScoredProduct,
+  column: ColumnConfig
+): any => {
+  const raw = column.format
+    ? column.format(product)
+    : product[column.key];
+
+  if (raw === null || raw === undefined) {
+    return "—";
+  }
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    return trimmed.length === 0 ? "—" : trimmed;
+  }
+
+  return raw;
+};
 
 interface ProductTableProps {
   limit?: number;
@@ -88,18 +89,13 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
   }, [scoredProducts, sortConfig]);
 
   const downloadExcel = () => {
-    const rows = sortedProducts.map((p) => {
+    const rows = sortedProducts.map((product) => {
       const row: Record<string, string | number> = {};
-      columns.forEach((c) => {
-        if (c === "score") {
-          row[c] = p.score.toFixed(3);
-        } else if (c === "optiz formula") {
-          row[c] = (p["optiz formula"] as number).toFixed(3);
-        } else {
-          row[c] = (p as any)[c];
-        }
+      columnConfigs.forEach((column) => {
+        const value = resolveCellValue(product, column);
+        row[column.label] = value;
       });
-      row["Code"] = p.Code;
+      row["Code"] = product.Code;
       return row;
     });
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -139,27 +135,29 @@ const getSortIndicator = (key: SortKey) => {
         </Button>
       </div>
       <Card className="overflow-hidden">
-      <div className="h-[70vh] overflow-x-auto">
-      <table className="min-w-full text-sm text-gray-900 [font-variant-numeric:tabular-nums]">
+      <div className="h-[70vh] overflow-auto">
+      <table className="w-full table-auto text-xs text-gray-900 leading-5 [font-variant-numeric:tabular-nums]">
         <thead className="bg-white sticky top-0 z-10 border-b">
           <tr>
-            {columns.map((column) => (
+            {columnConfigs.map((column) => (
               <th
-                key={column}
+                key={column.key}
                 scope="col"
-                className="sticky top-0 z-10 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
-                onClick={() => requestSort(column)}
+                className={`sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700 ${
+                  column.minWidth ?? "min-w-[80px]"
+                }`}
+                onClick={() => requestSort(column.key)}
               >
                 <span className="flex items-center gap-1">
-                  {column}
-                  {getSortIndicator(column)}
+                  {column.label}
+                  {getSortIndicator(column.key)}
                 </span>
               </th>
             ))}
-            <th scope="col" className="sticky top-0 z-10 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+            <th scope="col" className="sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
               Link
             </th>
-            <th scope="col" className="sticky top-0 z-10 bg-white px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
               Expand
             </th>
           </tr>
@@ -167,7 +165,7 @@ const getSortIndicator = (key: SortKey) => {
         <tbody className="divide-y divide-gray-100">
           {isLoading && (
             <tr>
-              <td colSpan={columns.length} className="h-10">
+              <td colSpan={columnConfigs.length + 2} className="h-12">
                 <div className="flex items-center justify-center py-4"><Spinner /></div>
               </td>
             </tr>
@@ -176,34 +174,34 @@ const getSortIndicator = (key: SortKey) => {
             <React.Fragment key={index}>
               <tr
                 className={`cursor-pointer transition-colors duration-150 odd:bg-white even:bg-gray-50 ${
-                  expandedRow === index 
-                    ? 'bg-blue-50' 
-                    : 'hover:bg-gray-100'
+                  expandedRow === index ? 'bg-blue-50' : 'hover:bg-gray-100'
                 } ${product.Offer === 0 ? 'bg-rose-50' : ''}`}
                 onClick={() => setExpandedRow(expandedRow === index ? null : index)}
               >
-                {columns.map((column) => (
-                  <td
-                    key={column}
-                    className="px-6 py-3 whitespace-nowrap font-medium"
-                  >
-                    {column === 'score'
-                      ? product.score.toFixed(3)
-                      : column === 'optiz formula'
-                        ? (product["optiz formula"] as number).toFixed(3)
-                        : (product[column] as string)}
-                  </td>
-                ))}
-                <td className="px-6 py-3 whitespace-nowrap font-medium text-blue-600">
-                  <Link 
-                    href={`https://www.sg-zertifikate.de/product-details/${product.Code}`} 
+                {columnConfigs.map((column) => {
+                  const value = resolveCellValue(product, column);
+
+                  return (
+                    <td
+                      key={column.key}
+                      className={`px-3 py-2 font-medium ${
+                        column.numeric ? "text-right" : "text-left"
+                      } ${column.key === "AssetName" ? "whitespace-normal" : "whitespace-nowrap"}`}
+                    >
+                      {value}
+                    </td>
+                  );
+                })}
+                <td className="px-3 py-2 whitespace-nowrap font-medium text-blue-600">
+                  <Link
+                    href={`https://www.sg-zertifikate.de/product-details/${product.Code}`}
                     target="_blank"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {product.Code}
                   </Link>
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-gray-500">
+                <td className="px-3 py-2 whitespace-nowrap text-gray-500">
                   {expandedRow === index ? (
                     <ChevronUpIcon className="w-5 h-5" />
                   ) : (
@@ -213,9 +211,9 @@ const getSortIndicator = (key: SortKey) => {
               </tr>
               {expandedRow === index && (
                 <tr>
-                  <td colSpan={columns.length + 2} className="p-0">
+                  <td colSpan={columnConfigs.length + 2} className="p-0">
                     <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x">
-                      <BarrierVisualization product={product} />
+                      <BarrierVisualization product={product}/>
                       <ProductInfoPanel product={product} />
                       <PriceHistoryChart product={product} />
                     </div>

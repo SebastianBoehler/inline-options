@@ -8,6 +8,31 @@ import { StandardDeviation, BollingerBands } from "@debut/indicators";
 
 const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const erf = (x: number): number => {
+  const sign = x < 0 ? -1 : 1;
+  const absX = Math.abs(x);
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+  const t = 1 / (1 + p * absX);
+  const y = 1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-absX * absX);
+  return sign * y;
+};
+
+const normalCdf = (x: number): number => 0.5 * (1 + erf(x / Math.SQRT2));
+
+const toFixedSafe = (value: number, digits: number) => {
+  if (!Number.isFinite(value)) {
+    return (0).toFixed(digits);
+  }
+  return value.toFixed(digits);
+};
+
 export async function fetchAssetTypes(): Promise<any> {
   const url = `${SG_API_ENDPOINT}/ProductSearch/AssetTypes`;
   const res = await fetch(url, {
@@ -250,26 +275,63 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     // Guard against missing/zero underlying price to avoid NaN/Infinity
     const price = Number((p as any).underlyingPrice ?? 0);
     const hasUnderlying = price > 0;
-    const diffToUpper = hasUnderlying
-      ? // (Upper - Price) / Price * 100
-        (p.UpperBarrierInlineWarrant / price - 1) * 100
-      : 0;
-    const diffToLower = hasUnderlying
-      ? // (Price - Lower) / Price * 100
-        (1 - p.LowerBarrierInlineWarrant / price) * 100
-      : 0;
+    const lowerBarrier = p.LowerBarrierInlineWarrant;
+    const upperBarrier = p.UpperBarrierInlineWarrant;
+    const diffToUpper = hasUnderlying ? (upperBarrier / price - 1) * 100 : 0;
+    const diffToLower = hasUnderlying ? (1 - lowerBarrier / price) * 100 : 0;
+    const daysUntilExpiry = differenceInDays(new Date(p.MaturityDate), new Date());
+    const rawVolatility = Number((p as any).volatility ?? 0);
+    const timeFraction = Math.max(daysUntilExpiry, 0) / 252;
+    const sigmaSqrtT = rawVolatility * Math.sqrt(timeFraction);
+    const sigmaSqT = rawVolatility * rawVolatility * timeFraction;
+    const muT = -0.5 * sigmaSqT;
+
+    let probStay = 0;
+    let sigmaDistanceLower = 0;
+    let sigmaDistanceUpper = 0;
+
+    if (hasUnderlying && lowerBarrier > 0 && upperBarrier > lowerBarrier) {
+      if (sigmaSqrtT > 0) {
+        const logLower = Math.log(lowerBarrier / price);
+        const logUpper = Math.log(upperBarrier / price);
+        const zLower = (logLower - muT) / sigmaSqrtT;
+        const zUpper = (logUpper - muT) / sigmaSqrtT;
+        const probability = normalCdf(zUpper) - normalCdf(zLower);
+        probStay = clamp(probability, 0, 1);
+        sigmaDistanceLower = Math.log(price / lowerBarrier) / sigmaSqrtT;
+        sigmaDistanceUpper = Math.log(upperBarrier / price) / sigmaSqrtT;
+      } else {
+        const insideCorridor = price > lowerBarrier && price < upperBarrier;
+        probStay = insideCorridor ? 1 : 0;
+        sigmaDistanceLower = insideCorridor ? 50 : 0;
+        sigmaDistanceUpper = insideCorridor ? 50 : 0;
+      }
+    }
+
+    if (!Number.isFinite(probStay)) probStay = 0;
+    if (!Number.isFinite(sigmaDistanceLower) || sigmaDistanceLower < 0) sigmaDistanceLower = 0;
+    if (!Number.isFinite(sigmaDistanceUpper) || sigmaDistanceUpper < 0) sigmaDistanceUpper = 0;
+
+    const expectedProfit = 10 * probStay - p.Offer;
+    const expectedReturnPct = p.Offer > 0 ? (expectedProfit / p.Offer) * 100 : 0;
+
     return {
       ...p,
       spread: spread.toFixed(2),
-      daysUntilExpiry: differenceInDays(new Date(p.MaturityDate), new Date()),
+      daysUntilExpiry,
       daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
       rangePercent: rangePercent.toFixed(2),
       potentialReturn,
       diffToUpper: diffToUpper.toFixed(2),
       diffToLower: diffToLower.toFixed(2),
-      volatility: Number((p as any).volatility ?? 0).toFixed(4),
+      volatility: rawVolatility.toFixed(4),
       bollingerWidth: Number((p as any).bollingerWidth ?? 0).toFixed(4),
       var95: Number((p as any).var95 ?? 0).toFixed(4),
+      probStay: toFixedSafe(probStay, 4),
+      expectedProfit: toFixedSafe(expectedProfit, 2),
+      expectedReturnPct: toFixedSafe(expectedReturnPct, 2),
+      sigmaDistanceLower: toFixedSafe(sigmaDistanceLower, 2),
+      sigmaDistanceUpper: toFixedSafe(sigmaDistanceUpper, 2),
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range
