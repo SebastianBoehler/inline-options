@@ -81,11 +81,11 @@ export default function PriceHistoryChart({ product }: PriceHistoryChartProps) {
             yAxisId="left"
             domain={[
               Math.min(
-                product.LowerBarrierInlineWarrant * 0.9,
+                product.LowerBarrierInlineWarrant,
                 ...data.map((d) => d.price)
               ),
               Math.max(
-                product.UpperBarrierInlineWarrant * 1.1,
+                product.UpperBarrierInlineWarrant,
                 ...data.map((d) => d.price)
               ),
             ]}
@@ -95,7 +95,7 @@ export default function PriceHistoryChart({ product }: PriceHistoryChartProps) {
           <YAxis
             yAxisId="right"
             orientation="right"
-            domain={['dataMin', 'dataMax']}
+            domain={[0, 10]}
             tick={{ fontSize: 10 }}
             tickFormatter={(value) => value.toFixed(2)}
           />
