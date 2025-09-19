@@ -14,7 +14,7 @@ import Select from "./components/ui/Select";
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [limit, setLimit] = useState(50);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(1);
   const currentDate = useRef(new Date().toISOString().split('T')[0]);
   const [calcDateFrom, setCalcDateFrom] = useState(currentDate.current);
   const [calcDateTo, setCalcDateTo] = useState(addDays(new Date(), 30).toISOString().split('T')[0]);
@@ -54,7 +54,7 @@ export default function Home() {
               <Input
                 id="offset"
                 type="number"
-                min={0}
+                min={1}
                 value={offset}
                 onChange={(e) => setOffset(Number(e.target.value))}
               />

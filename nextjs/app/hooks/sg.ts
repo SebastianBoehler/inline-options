@@ -209,7 +209,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   const fetchedProducts = [];
   let isFinished = false;
   let pageNum = offset;
-  const pageSize = 25;
+  const pageSize = 50;
   while (!isFinished) {
     const products = await fetchProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
     console.log(products.length, pageNum);
@@ -251,12 +251,12 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     const price = Number((p as any).underlyingPrice ?? 0);
     const hasUnderlying = price > 0;
     const diffToUpper = hasUnderlying
-      // (Upper - Price) / Price * 100
-      ? (p.UpperBarrierInlineWarrant / price - 1) * 100
+      ? // (Upper - Price) / Price * 100
+        (p.UpperBarrierInlineWarrant / price - 1) * 100
       : 0;
     const diffToLower = hasUnderlying
-      // (Price - Lower) / Price * 100
-      ? (1 - p.LowerBarrierInlineWarrant / price) * 100
+      ? // (Price - Lower) / Price * 100
+        (1 - p.LowerBarrierInlineWarrant / price) * 100
       : 0;
     return {
       ...p,
