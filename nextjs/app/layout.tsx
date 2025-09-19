@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: "Inline Options",
@@ -15,8 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-gray-50 text-gray-900">
-        <NavBar />
-        {children}
+        <div className="flex min-h-screen flex-col">
+          <NavBar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );
