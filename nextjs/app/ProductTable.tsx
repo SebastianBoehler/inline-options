@@ -15,8 +15,75 @@ import Spinner from "./components/ui/Spinner";
 import Button from "./components/ui/Button";
 import { ColumnConfig, columnConfigs, ScoredProduct, SortKey } from "./ColumnsConfig";
 
+const columnConfigMap = new Map<SortKey, ColumnConfig>(
+  columnConfigs.map((column) => [column.key, column])
+);
 
-const columns: SortKey[] = columnConfigs.map(({ key }) => key);
+const normalizeSortValue = (
+  product: ScoredProduct,
+  column: ColumnConfig
+): number | string | null => {
+  if (column.sortValue) {
+    return column.sortValue(product);
+  }
+
+  const raw = product[column.key as keyof ScoredProduct] as unknown;
+
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+
+  if (column.numeric) {
+    const numericValue =
+      typeof raw === "number"
+        ? raw
+        : Number(String(raw).replace(/%$/, ""));
+    return Number.isFinite(numericValue) ? numericValue : null;
+  }
+
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  }
+
+  return raw as number | string | null;
+};
+
+const compareValues = (
+  aValue: number | string | null,
+  bValue: number | string | null,
+  direction: "ascending" | "descending"
+) => {
+  const multiplier = direction === "ascending" ? 1 : -1;
+  const aIsNull = aValue === null || aValue === undefined;
+  const bIsNull = bValue === null || bValue === undefined;
+
+  if (aIsNull && bIsNull) {
+    return 0;
+  }
+
+  if (aIsNull) {
+    return 1 * multiplier;
+  }
+
+  if (bIsNull) {
+    return -1 * multiplier;
+  }
+
+  if (typeof aValue === "number" && typeof bValue === "number") {
+    if (aValue === bValue) {
+      return 0;
+    }
+    return (aValue < bValue ? -1 : 1) * multiplier;
+  }
+
+  const comparison = String(aValue).localeCompare(String(bValue), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+  return comparison * multiplier;
+};
 
 const resolveCellValue = (
   product: ScoredProduct,
@@ -74,15 +141,15 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
     let sortableProducts = [...scoredProducts];
     if (sortConfig !== null) {
       sortableProducts.sort((a, b) => {
-        // @ts-ignore
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
+        const column = columnConfigMap.get(sortConfig.key);
+        if (!column) {
+          return 0;
         }
-        // @ts-ignore
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
+
+        const aValue = normalizeSortValue(a, column);
+        const bValue = normalizeSortValue(b, column);
+
+        return compareValues(aValue, bValue, sortConfig.direction);
       });
     }
     return sortableProducts;

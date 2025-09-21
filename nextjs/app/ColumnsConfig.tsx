@@ -28,6 +28,7 @@ export type ColumnConfig = {
   numeric?: boolean;
   minWidth?: string;
   format?: (product: ScoredProduct) => string | number;
+  sortValue?: (product: ScoredProduct) => number | string | null;
 };
 
 export const columnConfigs: ColumnConfig[] = [
@@ -37,6 +38,7 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[88px]",
       format: (product) => product.optimizedScore.toFixed(3),
+      sortValue: (product) => product.optimizedScore,
     },
     {
       key: "score",
@@ -44,6 +46,7 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[80px]",
       format: (product) => product.score.toFixed(3),
+      sortValue: (product) => product.score,
     },
     {
       key: "optiz formula",
@@ -51,6 +54,7 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[72px]",
       format: (product) => (product["optiz formula"] as number).toFixed(3),
+      sortValue: (product) => product["optiz formula"] as number,
     },
     {
       key: "probStay",
@@ -61,6 +65,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.probStay);
         return value === null ? "—" : `${(value * 100).toFixed(1)}%`;
       },
+      sortValue: (product) => parseNumber(product.probStay),
     },
     {
       key: "expectedReturnPct",
@@ -71,6 +76,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.expectedReturnPct);
         return value === null ? "—" : `${value.toFixed(1)}%`;
       },
+      sortValue: (product) => parseNumber(product.expectedReturnPct),
     },
     {
       key: "expectedProfit",
@@ -81,6 +87,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.expectedProfit);
         return value === null ? "—" : value.toFixed(2);
       },
+      sortValue: (product) => parseNumber(product.expectedProfit),
     },
     {
       key: "sigmaDistanceLower",
@@ -91,6 +98,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.sigmaDistanceLower);
         return value === null ? "—" : value.toFixed(2);
       },
+      sortValue: (product) => parseNumber(product.sigmaDistanceLower),
     },
     {
       key: "sigmaDistanceUpper",
@@ -101,6 +109,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.sigmaDistanceUpper);
         return value === null ? "—" : value.toFixed(2);
       },
+      sortValue: (product) => parseNumber(product.sigmaDistanceUpper),
     },
     { key: "Isin", label: "ISIN", minWidth: "min-w-[120px]" },
     { key: "AssetName", label: "Asset", minWidth: "min-w-[100px]" },
@@ -113,6 +122,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.diffToLower);
         return value === null ? "—" : `${value.toFixed(2)}%`;
       },
+      sortValue: (product) => parseNumber(product.diffToLower),
     },
     {
       key: "diffToUpper",
@@ -123,6 +133,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.diffToUpper);
         return value === null ? "—" : `${value.toFixed(2)}%`;
       },
+      sortValue: (product) => parseNumber(product.diffToUpper),
     },
     {
       key: "Bid",
@@ -130,6 +141,7 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[72px]",
       format: (product) => product.Bid.toFixed(2),
+      sortValue: (product) => product.Bid,
     },
     {
       key: "Offer",
@@ -137,6 +149,7 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[72px]",
       format: (product) => product.Offer.toFixed(2),
+      sortValue: (product) => product.Offer,
     },
     {
       key: "spread",
@@ -147,6 +160,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.spread);
         return value === null ? "—" : value.toFixed(2);
       },
+      sortValue: (product) => parseNumber(product.spread),
     },
     {
       key: "rangePercent",
@@ -157,6 +171,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.rangePercent);
         return value === null ? "—" : `${value.toFixed(2)}%`;
       },
+      sortValue: (product) => parseNumber(product.rangePercent),
     },
     {
       key: "potentialReturn",
@@ -164,18 +179,21 @@ export const columnConfigs: ColumnConfig[] = [
       numeric: true,
       minWidth: "min-w-[120px]",
       format: (product) => product.potentialReturn.toFixed(3),
+      sortValue: (product) => product.potentialReturn,
     },
     {
       key: "daysUntilExpiry",
       label: "Days To Exp",
       numeric: true,
       minWidth: "min-w-[104px]",
+      sortValue: (product) => product.daysUntilExpiry,
     },
     {
       key: "daysRunning",
       label: "Days Run",
       numeric: true,
       minWidth: "min-w-[96px]",
+      sortValue: (product) => product.daysRunning,
     },
     {
       key: "volatility",
@@ -186,6 +204,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.volatility);
         return value === null ? "—" : value.toFixed(4);
       },
+      sortValue: (product) => parseNumber(product.volatility),
     },
     {
       key: "bollingerWidth",
@@ -196,6 +215,7 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.bollingerWidth);
         return value === null ? "—" : value.toFixed(4);
       },
+      sortValue: (product) => parseNumber(product.bollingerWidth),
     },
     {
       key: "var95",
@@ -206,5 +226,6 @@ export const columnConfigs: ColumnConfig[] = [
         const value = parseNumber(product.var95);
         return value === null ? "—" : value.toFixed(4);
       },
+      sortValue: (product) => parseNumber(product.var95),
     },
   ];
