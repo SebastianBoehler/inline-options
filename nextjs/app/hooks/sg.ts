@@ -267,6 +267,8 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     });
   }
 
+  const VALUE_SIGNAL_THRESHOLD = 0.15;
+
   const extendedProducts = fetchedProducts.map((p) => {
     const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
     const spread = (p.Offer - p.Bid) / 10;
@@ -312,8 +314,16 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     if (!Number.isFinite(sigmaDistanceLower) || sigmaDistanceLower < 0) sigmaDistanceLower = 0;
     if (!Number.isFinite(sigmaDistanceUpper) || sigmaDistanceUpper < 0) sigmaDistanceUpper = 0;
 
-    const expectedProfit = 10 * probStay - p.Offer;
+    const theoreticalPrice = 10 * probStay;
+    const expectedProfit = theoreticalPrice - p.Offer;
     const expectedReturnPct = p.Offer > 0 ? (expectedProfit / p.Offer) * 100 : 0;
+    const signalDelta = theoreticalPrice - p.Offer;
+    let blackScholesSignal: "Buy" | "Sell" | "Fair" = "Fair";
+    if (signalDelta > VALUE_SIGNAL_THRESHOLD) {
+      blackScholesSignal = "Buy";
+    } else if (signalDelta < -VALUE_SIGNAL_THRESHOLD) {
+      blackScholesSignal = "Sell";
+    }
 
     return {
       ...p,
@@ -332,6 +342,8 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       expectedReturnPct: toFixedSafe(expectedReturnPct, 2),
       sigmaDistanceLower: toFixedSafe(sigmaDistanceLower, 2),
       sigmaDistanceUpper: toFixedSafe(sigmaDistanceUpper, 2),
+      blackScholesPrice: toFixedSafe(theoreticalPrice, 2),
+      blackScholesSignal,
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range

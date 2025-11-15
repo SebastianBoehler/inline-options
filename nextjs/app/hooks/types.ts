@@ -83,4 +83,6 @@ export interface ExtendedProduct extends Product {
   expectedReturnPct: string;
   sigmaDistanceLower: string;
   sigmaDistanceUpper: string;
+  blackScholesPrice: string;
+  blackScholesSignal: string;
 }
