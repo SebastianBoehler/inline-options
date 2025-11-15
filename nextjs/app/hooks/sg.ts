@@ -10,6 +10,91 @@ const SG_API_ENDPOINT = "https://www.sg-zertifikate.de/EmcWebApi/api";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+interface DoubleNoTouchParams {
+  spot: number;
+  lowerBarrier: number;
+  upperBarrier: number;
+  volatility: number;
+  timeToMaturity: number; // in years
+  drift?: number; // risk-neutral drift of the underlying (dS/S)
+  terms?: number; // number of Fourier terms to include
+}
+
+const doubleNoTouchSurvivalProbability = ({
+  spot,
+  lowerBarrier,
+  upperBarrier,
+  volatility,
+  timeToMaturity,
+  drift = 0,
+  terms = 250,
+}: DoubleNoTouchParams): number => {
+  if (
+    !Number.isFinite(spot) ||
+    !Number.isFinite(lowerBarrier) ||
+    !Number.isFinite(upperBarrier) ||
+    !Number.isFinite(volatility) ||
+    !Number.isFinite(timeToMaturity) ||
+    spot <= 0 ||
+    lowerBarrier <= 0 ||
+    upperBarrier <= lowerBarrier ||
+    volatility <= 0 ||
+    timeToMaturity <= 0
+  ) {
+    return spot > lowerBarrier && spot < upperBarrier ? 1 : 0;
+  }
+
+  const sigma = volatility;
+  const sigmaSq = sigma * sigma;
+  const mu = drift - 0.5 * sigmaSq;
+  const kappa = mu / sigmaSq;
+
+  const logLower = Math.log(lowerBarrier);
+  const logUpper = Math.log(upperBarrier);
+  const logSpot = Math.log(spot);
+
+  const intervalWidth = logUpper - logLower;
+  const relativePosition = logSpot - logLower;
+
+  if (!Number.isFinite(intervalWidth) || intervalWidth <= 0) {
+    return 0;
+  }
+
+  const expKappaLower = Math.exp(kappa * logLower);
+  const expKappaWidth = Math.exp(kappa * intervalWidth);
+  const prefactor = Math.exp(-kappa * logSpot + 0.5 * ((mu * mu) / sigmaSq) * timeToMaturity);
+
+  let sum = 0;
+  const maxTerms = Math.max(terms, 1);
+  for (let n = 1; n <= maxTerms; n++) {
+    const beta = (n * Math.PI) / intervalWidth;
+    const denom = kappa * kappa + beta * beta;
+    if (denom === 0) {
+      continue;
+    }
+    const alternating = n % 2 === 0 ? 1 : -1;
+    const coefficient =
+      (2 / intervalWidth) *
+      expKappaLower *
+      beta *
+      (1 - alternating * expKappaWidth) /
+      denom;
+    const exponentialDecay = Math.exp(-0.5 * sigmaSq * beta * beta * timeToMaturity);
+    const sineComponent = Math.sin(beta * relativePosition);
+    const termContribution = coefficient * exponentialDecay * sineComponent;
+    sum += termContribution;
+    if (n > 10 && Math.abs(termContribution) < 1e-10) {
+      break;
+    }
+  }
+
+  const probability = prefactor * sum;
+  if (!Number.isFinite(probability)) {
+    return 0;
+  }
+  return clamp(probability, 0, 1);
+};
+
 const erf = (x: number): number => {
   const sign = x < 0 ? -1 : 1;
   const absX = Math.abs(x);
@@ -267,6 +352,8 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     });
   }
 
+  const VALUE_SIGNAL_THRESHOLD = 0.15;
+
   const extendedProducts = fetchedProducts.map((p) => {
     const rangePercent = (p.UpperBarrierInlineWarrant - p.LowerBarrierInlineWarrant) / p.LowerBarrierInlineWarrant;
     const spread = (p.Offer - p.Bid) / 10;
@@ -312,8 +399,32 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
     if (!Number.isFinite(sigmaDistanceLower) || sigmaDistanceLower < 0) sigmaDistanceLower = 0;
     if (!Number.isFinite(sigmaDistanceUpper) || sigmaDistanceUpper < 0) sigmaDistanceUpper = 0;
 
-    const expectedProfit = 10 * probStay - p.Offer;
-    const expectedReturnPct = p.Offer > 0 ? (expectedProfit / p.Offer) * 100 : 0;
+    if (hasUnderlying && lowerBarrier > 0 && upperBarrier > lowerBarrier) {
+      const survivalProbability = doubleNoTouchSurvivalProbability({
+        spot: price,
+        lowerBarrier,
+        upperBarrier,
+        volatility: rawVolatility,
+        timeToMaturity: timeFraction,
+      });
+      if (Number.isFinite(survivalProbability)) {
+        probStay = survivalProbability;
+      }
+    }
+
+    const theoreticalPrice = 10 * probStay;
+    const expectedProfit = theoreticalPrice - p.Offer;
+    const hasQuote = p.Offer > 0;
+    const expectedReturnPct = hasQuote ? (expectedProfit / p.Offer) * 100 : 0;
+    const signalDelta = hasQuote ? theoreticalPrice - p.Offer : 0;
+    let blackScholesSignal: "Buy" | "Sell" | "Fair" = "Fair";
+    if (hasQuote) {
+      if (signalDelta > VALUE_SIGNAL_THRESHOLD) {
+        blackScholesSignal = "Buy";
+      } else if (signalDelta < -VALUE_SIGNAL_THRESHOLD) {
+        blackScholesSignal = "Sell";
+      }
+    }
 
     return {
       ...p,
@@ -332,6 +443,8 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       expectedReturnPct: toFixedSafe(expectedReturnPct, 2),
       sigmaDistanceLower: toFixedSafe(sigmaDistanceLower, 2),
       sigmaDistanceUpper: toFixedSafe(sigmaDistanceUpper, 2),
+      blackScholesPrice: toFixedSafe(theoreticalPrice, 2),
+      blackScholesSignal,
     } as ExtendedProduct;
   });
   //sort by lowest days until expiry and biggest range
