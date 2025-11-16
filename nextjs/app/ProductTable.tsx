@@ -10,10 +10,13 @@ import Link from "next/link";
 import BarrierVisualization from "./components/BarrierVisualization";
 import ProductInfoPanel from "./components/ProductInfoPanel";
 import PriceHistoryChart from "./components/PriceHistoryChart";
+import SecondaryMetricsPanel from "./components/SecondaryMetricsPanel";
 import Card from "./components/ui/Card";
 import Spinner from "./components/ui/Spinner";
 import Button from "./components/ui/Button";
-import { ColumnConfig, columnConfigs, ScoredProduct, SortKey } from "./ColumnsConfig";
+import { ColumnConfig, columnConfigs, ScoredProduct, SortKey, essentialColumns } from "./ColumnsConfig";
+import ColumnVisibilityToggle from "./components/ColumnVisibilityToggle";
+import { useColumnVisibilityStore } from "./stores/columnVisibilityStore";
 
 const columnConfigMap = new Map<SortKey, ColumnConfig>(
   columnConfigs.map((column) => [column.key, column])
@@ -121,6 +124,7 @@ export default function ProductTable({ limit = 10, offset = 0, calcDateFrom, cal
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const { visibleColumns } = useColumnVisibilityStore();
 
   useEffect(() => {
     async function getProducts() {
@@ -196,21 +200,22 @@ const getSortIndicator = (key: SortKey) => {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-end mb-3">
+      <div className="flex items-center justify-between mb-3">
+        <ColumnVisibilityToggle allColumns={columnConfigs} />
         <Button variant="secondary" size="sm" onClick={downloadExcel}>
           Download Excel
         </Button>
       </div>
       <Card className="overflow-hidden">
       <div className="h-[70vh] overflow-auto">
-      <table className="w-full table-auto text-xs text-gray-900 leading-5 [font-variant-numeric:tabular-nums]">
-        <thead className="bg-white sticky top-0 z-10 border-b">
+      <table className="w-full table-fixed text-xs text-gray-900 leading-5 [font-variant-numeric:tabular-nums] border-collapse">
+        <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-300">
           <tr>
-            {columnConfigs.map((column) => (
+            {columnConfigs.filter(col => visibleColumns.includes(col.key)).map((column) => (
               <th
                 key={column.key}
                 scope="col"
-                className={`sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700 ${
+                className={`sticky top-0 z-10 bg-gray-50 px-3 py-2 text-left text-[11px] font-medium text-gray-700 tracking-tight cursor-pointer hover:bg-gray-100 border-r border-gray-200 last:border-r-0 ${
                   column.minWidth ?? "min-w-[80px]"
                 }`}
                 onClick={() => requestSort(column.key)}
@@ -221,18 +226,18 @@ const getSortIndicator = (key: SortKey) => {
                 </span>
               </th>
             ))}
-            <th scope="col" className="sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-              Link
+            <th scope="col" className="sticky top-0 z-10 bg-gray-50 px-3 py-2 text-left text-[11px] font-medium text-gray-700 tracking-tight border-r border-gray-200">
+              Code
             </th>
-            <th scope="col" className="sticky top-0 z-10 bg-white px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-              Expand
+            <th scope="col" className="sticky top-0 z-10 bg-gray-50 px-3 py-2 text-left text-[11px] font-medium text-gray-700 tracking-tight w-12">
+              
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="bg-white">
           {isLoading && (
             <tr>
-              <td colSpan={columnConfigs.length + 2} className="h-12">
+              <td colSpan={columnConfigs.filter(col => visibleColumns.includes(col.key)).length + 2} className="h-12 border-b border-gray-200">
                 <div className="flex items-center justify-center py-4"><Spinner /></div>
               </td>
             </tr>
@@ -240,18 +245,18 @@ const getSortIndicator = (key: SortKey) => {
           {sortedProducts.map((product, index) => (
             <React.Fragment key={index}>
               <tr
-                className={`cursor-pointer transition-colors duration-150 odd:bg-white even:bg-gray-50 ${
-                  expandedRow === index ? 'bg-blue-50' : 'hover:bg-gray-100'
-                } ${product.Offer === 0 ? 'bg-rose-50' : ''}`}
+                className={`border-b border-gray-200 cursor-pointer ${
+                  expandedRow === index ? 'bg-blue-50' : 'hover:bg-gray-50'
+                } ${product.Offer === 0 ? 'bg-red-50' : ''}`}
                 onClick={() => setExpandedRow(expandedRow === index ? null : index)}
               >
-                {columnConfigs.map((column) => {
+                {columnConfigs.filter(col => visibleColumns.includes(col.key)).map((column) => {
                   const value = resolveCellValue(product, column);
 
                   return (
                     <td
                       key={column.key}
-                      className={`px-3 py-2 font-medium ${
+                      className={`px-3 py-2 font-medium text-gray-900 border-r border-gray-100 last:border-r-0 ${
                         column.numeric ? "text-right" : "text-left"
                       } ${column.key === "AssetName" ? "whitespace-normal" : "whitespace-nowrap"}`}
                     >
@@ -259,7 +264,7 @@ const getSortIndicator = (key: SortKey) => {
                     </td>
                   );
                 })}
-                <td className="px-3 py-2 whitespace-nowrap font-medium text-blue-600">
+                <td className="px-3 py-2 whitespace-nowrap font-medium text-blue-600 border-r border-gray-100">
                   <Link
                     href={`https://www.sg-zertifikate.de/product-details/${product.Code}`}
                     target="_blank"
@@ -268,21 +273,22 @@ const getSortIndicator = (key: SortKey) => {
                     {product.Code}
                   </Link>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-gray-500">
+                <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-center">
                   {expandedRow === index ? (
-                    <ChevronUpIcon className="w-5 h-5" />
+                    <ChevronUpIcon className="w-4 h-4" />
                   ) : (
-                    <ChevronDownIcon className="w-5 h-5" />
+                    <ChevronDownIcon className="w-4 h-4" />
                   )}
                 </td>
               </tr>
               {expandedRow === index && (
                 <tr>
-                  <td colSpan={columnConfigs.length + 2} className="p-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x">
+                  <td colSpan={columnConfigs.filter(col => visibleColumns.includes(col.key)).length + 2} className="p-0 bg-gray-50">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
                       <BarrierVisualization product={product}/>
                       <ProductInfoPanel product={product} />
                       <PriceHistoryChart product={product} />
+                      <SecondaryMetricsPanel product={product} />
                     </div>
                   </td>
                 </tr>

@@ -107,30 +107,55 @@ export default function OptionHistoryOverlayChart({
   }
 
   const colors = [
-    "#8884d8",
-    "#82ca9d",
-    "#ffc658",
-    "#ff7300",
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
+    "#374151", // gray-700
+    "#6b7280", // gray-500
+    "#9ca3af", // gray-400
+    "#d1d5db", // gray-300
+    "#3b82f6", // blue-500 (accent)
+    "#10b981", // emerald-500
+    "#f59e0b", // amber-500
+    "#ef4444", // red-500
   ];
 
   return (
     <div className="w-full h-96">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <Legend onClick={toggleSeries} />
-          <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-          <YAxis tickFormatter={(v) => v.toFixed(2)} domain={[0, 10]} />
-          <Tooltip formatter={(v: number) => v.toFixed(2)} labelFormatter={(l) => l} />
+          <Legend 
+            onClick={toggleSeries}
+            wrapperStyle={{ fontSize: '11px', color: '#6b7280' }}
+            iconType="line"
+          />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: 10, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            tickLine={{ stroke: '#e5e7eb' }}
+          />
+          <YAxis 
+            tickFormatter={(v) => v.toFixed(2)} 
+            domain={[0, 10]}
+            tick={{ fontSize: 10, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            tickLine={{ stroke: '#e5e7eb' }}
+          />
+          <Tooltip 
+            formatter={(v: number) => v.toFixed(2)} 
+            labelFormatter={(l) => l}
+            contentStyle={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '0',
+              fontSize: '11px',
+              color: '#374151'
+            }}
+          />
           <Line
             type="monotone"
             dataKey="avg"
             name="Average Bid"
-            stroke="#000000"
-            strokeWidth={3}
+            stroke="#111827"
+            strokeWidth={1.5}
             dot={false}
             hide={hiddenSeries["avg"]}
           />
