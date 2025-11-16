@@ -13,7 +13,7 @@ import Select from "./components/ui/Select";
 
 export default function Home() {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [limit, setLimit] = useState(100);
+  const [limit, setLimit] = useState(500);
   const [offset, setOffset] = useState(1);
   const currentDate = useRef(new Date().toISOString().split('T')[0]);
   const [calcDateFrom, setCalcDateFrom] = useState(currentDate.current);
