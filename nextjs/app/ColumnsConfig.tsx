@@ -221,7 +221,7 @@ export const secondaryColumns: ColumnConfig[] = [
   },
   {
     key: "daysRunning",
-    label: "Days Run",
+    label: "Days Left",
     numeric: true,
     minWidth: "min-w-[96px]",
     sortValue: (product) => product.daysRunning,

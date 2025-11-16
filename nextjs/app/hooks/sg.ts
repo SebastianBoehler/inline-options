@@ -73,12 +73,7 @@ const doubleNoTouchSurvivalProbability = ({
       continue;
     }
     const alternating = n % 2 === 0 ? 1 : -1;
-    const coefficient =
-      (2 / intervalWidth) *
-      expKappaLower *
-      beta *
-      (1 - alternating * expKappaWidth) /
-      denom;
+    const coefficient = ((2 / intervalWidth) * expKappaLower * beta * (1 - alternating * expKappaWidth)) / denom;
     const exponentialDecay = Math.exp(-0.5 * sigmaSq * beta * beta * timeToMaturity);
     const sineComponent = Math.sin(beta * relativePosition);
     const termContribution = coefficient * exponentialDecay * sineComponent;
@@ -450,7 +445,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       ...p,
       spread: spread.toFixed(2),
       daysUntilExpiry,
-      daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
+      daysRunning: differenceInDays(new Date(p.MaturityDate), new Date()),
       rangePercent: rangePercent.toFixed(2),
       potentialReturn,
       diffToUpper: diffToUpper.toFixed(2),
