@@ -220,11 +220,11 @@ export const secondaryColumns: ColumnConfig[] = [
     sortValue: (product) => product.potentialReturn,
   },
   {
-    key: "daysRunning",
+    key: "daysUntilExpiry",
     label: "Days Left",
     numeric: true,
     minWidth: "min-w-[96px]",
-    sortValue: (product) => product.daysRunning,
+    sortValue: (product) => product.daysUntilExpiry,
   },
   {
     key: "volatility",

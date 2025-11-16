@@ -445,7 +445,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
       ...p,
       spread: spread.toFixed(2),
       daysUntilExpiry,
-      daysRunning: differenceInDays(new Date(p.MaturityDate), new Date()),
+      daysRunning: differenceInDays(new Date(), new Date(p.IssueDate)),
       rangePercent: rangePercent.toFixed(2),
       potentialReturn,
       diffToUpper: diffToUpper.toFixed(2),
