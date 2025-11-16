@@ -10,9 +10,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { extendedProducts } from "../hooks/sg";
+import { extendedProducts, getCachedHistory } from "../hooks/sg";
 import { ExtendedProduct, HistoryItem } from "../hooks/types";
-import { fetchHistory } from "../hooks/sg";
 import Spinner from "../components/ui/Spinner";
 
 interface OptionHistoryOverlayChartProps {
@@ -60,7 +59,7 @@ export default function OptionHistoryOverlayChart({
         });
         setProductCodes(products.map((p) => p.Code));
         const histories: HistoryItem[][] = await Promise.all(
-          products.map((p) => fetchHistory(p.Id).catch(() => [] as HistoryItem[]))
+          products.map((p) => getCachedHistory(p.Id).catch(() => [] as HistoryItem[]))
         );
         // Aggregate by date
         const dateMap: Record<string, { sum: number; count: number; [key: string]: number }> = {};

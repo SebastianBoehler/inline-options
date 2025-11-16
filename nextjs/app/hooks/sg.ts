@@ -20,7 +20,7 @@ const erf = (x: number): number => {
   const a5 = 1.061405429;
   const p = 0.3275911;
   const t = 1 / (1 + p * absX);
-  const y = 1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-absX * absX);
+  const y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
   return sign * y;
 };
 
@@ -48,6 +48,11 @@ export async function fetchAssetTypes(): Promise<any> {
   const json = await res.json();
   return json;
 }
+
+export const getCachedAssetTypes = unstable_cache(fetchAssetTypes, ["assetTypes"], {
+  tags: ["assetTypes"],
+  revalidate: 60 * 60 * 24,
+});
 
 export async function fetchAssets(productClass = "8"): Promise<Asset[]> {
   const url = `${SG_API_ENDPOINT}/ProductSearch/Assets?productClassificationId=${productClass}`;
@@ -104,6 +109,11 @@ export async function fetchProducts(
   return json.Products;
 }
 
+export const getCachedProducts = unstable_cache(fetchProducts, ["products"], {
+  tags: ["products"],
+  revalidate: 60 * 60 * 24,
+});
+
 export async function fetchProductByCode(productCode: string): Promise<ProductSearchResponse["Products"][number]> {
   const url = `${SG_API_ENDPOINT}/Products?code=${productCode}`;
   const res = await fetch(url, {
@@ -136,6 +146,11 @@ export async function fetchHistory(productId: number): Promise<HistoryItem[]> {
   return json;
 }
 
+export const getCachedHistory = unstable_cache(fetchHistory, ["history"], {
+  tags: ["history"],
+  revalidate: 60 * 60 * 24,
+});
+
 export async function fetchProductIntradayPrices(productId: number): Promise<HistoryItem[]> {
   const url = `${SG_API_ENDPOINT}/Prices/Intraday?productId=${productId}`;
   const res = await fetch(url, {
@@ -152,6 +167,11 @@ export async function fetchProductIntradayPrices(productId: number): Promise<His
   //console.log("Intraday prices for product", json.length);
   return json;
 }
+
+export const getCachedProductIntradayPrices = unstable_cache(fetchProductIntradayPrices, ["productIntradayPrices"], {
+  tags: ["productIntradayPrices"],
+  revalidate: 60 * 60 * 24,
+});
 
 function calcMetrics(history: HistoryItem[], period = 20, confidence = 0.95) {
   if (history.length < period + 1) {
@@ -209,7 +229,7 @@ export const getUnderylingPrice = async (product: ProductSearchResponse["Product
     const diff = differenceInMinutes(new Date(), cached.timestamp);
     if (diff < 30) return cached.price;
   }
-  const intradayPrice = await fetchProductIntradayPrices(product.Id)
+  const intradayPrice = await getCachedProductIntradayPrices(product.Id)
     .then((prices) => prices[prices.length - 1].UnderlyingPrice)
     .catch(() => null);
 
@@ -218,7 +238,7 @@ export const getUnderylingPrice = async (product: ProductSearchResponse["Product
     return intradayPrice;
   }
 
-  const history = await fetchHistory(product.Id)
+  const history = await getCachedHistory(product.Id)
     .then((prices) => prices[prices.length - 1].UnderlyingPrice)
     .catch(() => null);
 
@@ -236,7 +256,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   let pageNum = offset;
   const pageSize = 50;
   while (!isFinished) {
-    const products = await fetchProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
+    const products = await getCachedProducts(pageNum, pageSize, calcDateFrom, calcDateTo, assetId);
     console.log(products.length, pageNum);
     fetchedProducts.push(...products);
     if (products.length < pageSize || fetchedProducts.length >= limit) {
@@ -252,7 +272,7 @@ export async function extendedProducts({ limit, offset, calcDateFrom, calcDateTo
   //using lodash put into chunks and add underlying price from latest intraday price
   const chunkedProducts = chunk(fetchedProducts, 20);
   for (const chunk of chunkedProducts) {
-    const histories = await Promise.allSettled(chunk.map((p) => fetchHistory(p.Id)));
+    const histories = await Promise.allSettled(chunk.map((p) => getCachedHistory(p.Id)));
     chunk.forEach((p, i) => {
       if (histories[i].status === "rejected") {
         return;

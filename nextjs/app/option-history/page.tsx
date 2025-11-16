@@ -1,5 +1,5 @@
 "use client";
-import { fetchAssets } from "../hooks/sg";
+import { getCachedAssets } from "../hooks/sg";
 import { useEffect, useState, useRef } from "react";
 import useDebounce from "../hooks/useDebounce";
 import { Asset } from "../hooks/types";
@@ -25,7 +25,7 @@ export default function OptionHistoryPage() {
 
   useEffect(() => {
     async function loadAssets() {
-      const assets = await fetchAssets();
+      const assets = await getCachedAssets();
       setAssets(assets);
       if (assets.length > 0) setAssetId(assets[0].Id.toString());
     }
