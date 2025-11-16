@@ -89,7 +89,7 @@ export default function BarrierVisualization({ product }: BarrierVisualizationPr
           </div>
           <div className="bg-gray-50 p-3 border border-gray-200">
             <div className="font-medium text-gray-700 text-xs uppercase tracking-wide">Potential Return</div>
-            <div className="text-lg font-mono font-medium text-gray-900">{product.potentialReturn}</div>
+            <div className="text-lg font-mono font-medium text-gray-900">{product.potentialReturn.toFixed(2)}%</div>
           </div>
         </div>
       </div>
