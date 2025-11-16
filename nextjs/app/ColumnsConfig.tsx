@@ -90,6 +90,28 @@ export const columnConfigs: ColumnConfig[] = [
       sortValue: (product) => parseNumber(product.expectedProfit),
     },
     {
+      key: "blackScholesPrice",
+      label: "Black Scholes",
+      numeric: true,
+      minWidth: "min-w-[110px]",
+      format: (product) => {
+        const value = parseNumber(product.blackScholesPrice);
+        return value === null ? "—" : value.toFixed(2);
+      },
+      sortValue: (product) => parseNumber(product.blackScholesPrice),
+    },
+    {
+      key: "blackScholesSignal",
+      label: "BS Signal",
+      minWidth: "min-w-[96px]",
+      format: (product) => product.blackScholesSignal,
+      sortValue: (product) => {
+        const order: Record<string, number> = { Buy: 2, Fair: 1, Sell: 0 };
+        const value = product.blackScholesSignal;
+        return order[value] ?? 1;
+      },
+    },
+    {
       key: "sigmaDistanceLower",
       label: "Sigma ↓",
       numeric: true,

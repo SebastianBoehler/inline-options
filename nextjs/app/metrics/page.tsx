@@ -61,6 +61,32 @@ const metricSections: MetricSection[] = [
       "Exp Return = (Exp Profit / Offer) * 100. Reported as a percentage in the table.",
   },
   {
+    key: "black-scholes-price",
+    title: "Black Scholes",
+    summary:
+      "Risk-neutral fair value of the inline warrant calculated from the Black–Scholes double-no-touch probability.",
+    interpretation: [
+      "Values above the current Offer imply the market is charging less than the model fair value.",
+      "Matches 10 × Prob Stay when interest rates are assumed to be negligible over the remaining term.",
+      "Used alongside the BS Signal column to highlight potential mispricings.",
+    ],
+    calculation:
+      "Black Scholes = 10 × Prob Stay. The payoff of 10 EUR is multiplied by the risk-neutral probability of surviving inside the barrier corridor.",
+  },
+  {
+    key: "black-scholes-signal",
+    title: "BS Signal",
+    summary:
+      "Discretionary trade signal based on the difference between the Black Scholes fair value and the quoted offer price.",
+    interpretation: [
+      "Buy indicates the model value exceeds the offer by more than 0.15 EUR.",
+      "Sell is triggered when the offer is at least 0.15 EUR richer than the model value.",
+      "Fair means the discrepancy is within the neutral band.",
+    ],
+    calculation:
+      "If Black Scholes − Offer > 0.15 → Buy, if < −0.15 → Sell, otherwise Fair. The 0.15 EUR threshold avoids spurious signals from small rounding differences.",
+  },
+  {
     key: "score",
     title: "Score",
     summary:
