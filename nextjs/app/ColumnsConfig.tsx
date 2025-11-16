@@ -73,14 +73,7 @@ export const essentialColumns: ColumnConfig[] = [
     format: (product) => product.Offer.toFixed(2),
     sortValue: (product) => product.Offer,
   },
-  {
-    key: "daysUntilExpiry",
-    label: "DTE",
-    numeric: true,
-    minWidth: "min-w-[60px]",
-    sortValue: (product) => product.daysUntilExpiry,
-  },
-];
+  ];
 
 // Secondary columns for expandable details
 export const secondaryColumns: ColumnConfig[] = [
